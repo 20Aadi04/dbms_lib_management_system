@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from tkSliderWidget import Slider
-
+from RangeSlider.RangeSlider import RangeSliderH
 
 ## template
 # class MainPage(tk.Frame):
@@ -48,22 +47,12 @@ class BookingPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        slider = Slider(
-            self,
-            width=400,
-            height=60,
-            min_val=0,
-            max_val=900,
-            init_lis=[0,30],
-            show_value=True,
-            # removable=True,
-            # addable=True,
-        )
-
-        # optionally add a callback on value change
-        slider.setValueChangeCallback(lambda vals: print(vals))
-
-        slider.pack()
+        root = tk.Tk()
+        
+        hLeft = tk.DoubleVar(value = 0.2)  #left handle variable initialised to value 0.2
+        hRight = tk.DoubleVar(value = 0.85)  #right handle variable initialised to value 0.85
+        hSlider = RangeSliderH( root , [hLeft, hRight] , padX = 12)  
+        hSlider.pack()  
     def correct_slider():
         pass
     def update_time_labels():
