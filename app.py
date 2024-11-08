@@ -35,26 +35,51 @@ class LoginPage(tk.Frame):
     def login(self):
         if(self.student_id_entry.get() =='loki' and self.password_entry.get() == 'admin'):
             self.student_id_entry.selection_clear()
-            self.controller.show_frame(BookingPage)
         else : 
             self.student_id_entry.selection_clear()
-            
             print("wrong password")
+        self.controller.show_frame(BookingPage)
+
     def reg(self):
         pass
 
 class BookingPage(tk.Frame):
+    max_time_span = 4*60 #minutes
+    min_time_span = 60 #minutes
+    left_pointer = 0
+    right_pointer = 30
+    max_time = 600
+    min_time = 0 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        root = tk.Tk()
-        
-        hLeft = tk.DoubleVar(value = 0.2)  #left handle variable initialised to value 0.2
-        hRight = tk.DoubleVar(value = 0.85)  #right handle variable initialised to value 0.85
-        hSlider = RangeSliderH( root , [hLeft, hRight] , padX = 12)  
-        hSlider.pack()  
-    def correct_slider():
-        pass
+
+        self.hLeft = tk.DoubleVar(value = self.left_pointer)  
+        self.hRight = tk.DoubleVar(value = self.right_pointer) 
+        self.slider = RangeSliderH( self , [self.hLeft, self.hRight] , padX = 16,step_size=5,min_val=self.min_time,max_val=self.max_time,show_value=False) 
+        self.hRight.trace_add('write',self.correct_slider)
+        self.slider.pack()
+        # hLeft.trace_add('w',self.correct_lslider)
+    def correct_slider(self,*args):
+        lp = self.hLeft.get()
+        rp = self.hRight.get()
+        if rp != self.right_pointer:
+            if rp <= self.min_time_span:
+                rp = self.min_time_span
+            elif abs(lp-rp) > self.max_time_span:
+                lp =rp-self.max_time_span
+            elif abs(lp-rp) < self.min_time_span:
+                lp = rp-self.min_time_span
+        else :
+            if lp >= self.max_time - self.min_time_span:
+                lp = self.max_time - self.min_time_span
+            elif abs(lp-rp) > self.max_time_span:
+                rp =lp+self.max_time_span
+            elif abs(lp-rp) < self.min_time_span:
+                rp = lp+self.min_time_span
+        self.left_pointer = lp 
+        self.right_pointer = rp
+        self.slider.forceValues([lp, rp])
     def update_time_labels():
         pass
 class windows(tk.Tk):
