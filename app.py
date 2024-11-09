@@ -217,6 +217,12 @@ class windows(tk.Tk):
         tk.Tk.__init__(self, *args, **kwargs)
         # Adding a title to the window
         self.wm_title("Library Seat Management app")
+        self.geometry("500x600")
+        
+        style = ttk.Style()
+        style.configure('TLabel', font=('Helvetica', 12), padding=5)
+        style.configure('TButton', font=('Helvetica', 10), padding=5)
+        style.configure('TEntry', font=('Helvetica', 10), padding=5)
         # self.wm_minsize = (1280,720)
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         # creating a frame and assigning it to container
