@@ -107,6 +107,7 @@ class RegistrationPage(tk.Frame):
                 cur.execute(f"insert into student(student_id,fname,lname,dob,grad_type,email,phone_num) values ('{student_id}','{first_name}','{last_name}','{dob}','{grad_type}','{email}','{phone_number}')")
             self.controller.conn.commit()
             messagebox.showinfo("Registration", "Registration Successful")
+            self.controller.show_frame(LoginPage)
         else:
             messagebox.showerror("Error", "Please Enter data properly")
     
