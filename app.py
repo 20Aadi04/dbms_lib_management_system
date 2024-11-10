@@ -110,7 +110,41 @@ class RegistrationPage(tk.Frame):
             self.controller.show_frame(LoginPage)
         else:
             messagebox.showerror("Error", "Please Enter data properly")
+
+class SeatInfo(tk.Frame):
+    """
+    parent = parent frame \n
+    callback = func(seat_info) to callback when button is clicked \n
+    seat_info = {'location' : 'upper'/'lower' ,'seat_no' : 12,'seat_id' :13 }
+    """
+    def __init__(self,parent,_callback,seat_info ):
+        tk.Frame.__init__(self, parent,highlightbackground="black",highlightthickness=1)
+        ttk.Label(self,text= "location :").pack(side="left")
+        ttk.Label(self,text= f"{seat_info['location']}").pack(side="left")
+        ttk.Label(self,text= "seat no :").pack(side="left")
+        ttk.Label(self,text= f"{seat_info['seat_no']}").pack(side="left")
+        ttk.Button(self,text="select" ,command=lambda :_callback(seat_info))
     
+class ScrollableTable(tk.Frame):
+    def __init__(self,parent,Widget,callback,infos):
+        self.Widget = Widget
+        self.callback = callback
+        tk.Frame.__init__(self, parent)
+        ttk.Scrollbar(self).pack(side=tk.RIGHT)
+        self.widgets = []
+        self.update(infos)
+
+    def update(self,infos):
+        for i in self.widgets: 
+            print('removed')
+            i.destroy()
+        self.widgets = []
+        for info in infos:
+            print('added ' ,info)
+            self.widgets.append(self.Widget(self,self.callback,info))
+            self.widgets[-1].pack(side=tk.TOP)
+        self.tkraise()
+
 
 class BookingTimeSlotPage(tk.Frame):
     max_time_span = 4*60 #minutes
@@ -144,6 +178,14 @@ class BookingTimeSlotPage(tk.Frame):
         self.slider.grid(row=1, column=0,columnspan=5)
         self.update_time_labels()
         # hLeft.trace_add('w',self.correct_lslider)
+        self.table = ScrollableTable(self,SeatInfo,self.select_seat,[])
+        self.table.grid(row = 3 , column=0, pady=10, padx=10,columnspan=5)
+        ttk.Button(self,text="back",command=lambda : controller.show_frame(LoginPage) ).grid(row = 5 , column=0, pady=10, padx=10)
+    
+    def select_seat(self,info):
+        self.controller.data['cur_seat_info'] = info
+
+
     def correct_slider(self,*args):
         lp = self.hLeft.get()
         rp = self.hRight.get()
@@ -181,7 +223,7 @@ class BookingTimeSlotPage(tk.Frame):
         end_time = tomorrow_at_8am + timedelta(minutes=self.right_pointer)
  
         with self.controller.conn.cursor() as cur:
-            cur.execute( f"""SELECT seat_id
+            cur.execute( f"""SELECT seat_id ,location ,seat_no
                 FROM seat
                 WHERE seat_id NOT IN (
                     SELECT seat_id
@@ -189,8 +231,9 @@ class BookingTimeSlotPage(tk.Frame):
                     WHERE (start_time < '{end_time.strftime("%Y-%m-%d %H:%M:%S")}' AND end_time > '{start_time.strftime("%Y-%m-%d %H:%M:%S")}'));"""
             )
             l = cur.fetchall()
-            print(l)
-            
+            infos = [{'seat_id':seat_id,'location':location,'seat_no':seat_no} for (seat_id,location,seat_no) in l]
+            self.table.update(infos)
+    
 
     def place(self):
         tomorrow = datetime.now() + timedelta(days=1)
