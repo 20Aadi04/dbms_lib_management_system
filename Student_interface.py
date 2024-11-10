@@ -168,28 +168,68 @@ class TimeSlotFrame:
 class SeatBookingFrame:
     def __init__(self, app):
         self.app = app
+        self.selected_seat = tk.StringVar()  # To store the selected seat_id for single selection
         self.frame = ttk.Frame(app.root)
 
-        ttk.Label(self.frame, text="Seat Number: ").grid(row=0, column=0, pady=10, padx=10)
-        self.seat_number_dropdown = ttk.Combobox(self.frame, values=[str(i) for i in range(1, 101)], state="readonly")
-        self.seat_number_dropdown.grid(row=0, column=1, pady=10, padx=10)
+        # Canvas setup
+        self.canvas = tk.Canvas(self.frame, width=500, height=300)
+        self.scrollbar_y = ttk.Scrollbar(self.frame, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.scrollbar_y.set)
+        
+        self.scrollable_frame = ttk.Frame(self.canvas)
+        self.scrollable_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
 
-        ttk.Label(self.frame, text="Seat Location: ").grid(row=1, column=0, pady=10, padx=10)
-        self.seat_location_dropdown = ttk.Combobox(self.frame, values=["Upper", "Lower"], state="readonly")
-        self.seat_location_dropdown.grid(row=1, column=1, pady=10, padx=10)
+        # Pack canvas and scrollbar
+        self.scrollbar_y.pack(side="right", fill="y")
+        self.canvas.pack(fill="both", expand=True)
 
-        ttk.Button(self.frame, text="Submit Booking", command=self.submit_booking).grid(row=2, column=1, pady=20)
+        # Display seat options with radio buttons
+        self.display_seats()
 
-    def submit_booking(self):
-        seat_number = self.seat_number_dropdown.get()
-        seat_location = self.seat_location_dropdown.get()
+        # Button frame to hold the Next button below the canvas
+        self.button_frame = ttk.Frame(self.frame)
+        self.button_frame.pack(fill="x")
+        self.next_button = ttk.Button(self.button_frame, text="Next", command=self.go_to_next_frame)
+        self.next_button.grid(column=0, row=0, pady=20, padx=10)
 
-        if seat_number and seat_location:
-            messagebox.showinfo("Booking", "Seat booked successfully!")
+    def display_seats(self):
+        seats = self.retrieve_seats()
+        
+        # Display seat details as table headers
+        ttk.Label(self.scrollable_frame, text="Seat ID", font=('Helvetica', 12, 'bold')).grid(row=0, column=0, padx=10, pady=5)
+        ttk.Label(self.scrollable_frame, text="Seat Number", font=('Helvetica', 12, 'bold')).grid(row=0, column=1, padx=10, pady=5)
+        ttk.Label(self.scrollable_frame, text="Seat Location", font=('Helvetica', 12, 'bold')).grid(row=0, column=2, padx=10, pady=5)
+        ttk.Label(self.scrollable_frame, text="Select", font=('Helvetica', 12, 'bold')).grid(row=0, column=3, padx=10, pady=5)
+
+        # Populate table with seat data and add radio buttons for selection
+        for i, (seat_id, seat_no, location) in enumerate(seats, start=1):
+            ttk.Label(self.scrollable_frame, text=seat_id).grid(row=i, column=0, padx=10, pady=5)
+            ttk.Label(self.scrollable_frame, text=seat_no).grid(row=i, column=1, padx=10, pady=5)
+            ttk.Label(self.scrollable_frame, text=location).grid(row=i, column=2, padx=10, pady=5)
+            
+            # Radio button for selecting a seat (all linked to self.selected_seat)
+            radio_button = ttk.Radiobutton(self.scrollable_frame, variable=self.selected_seat, value=str(seat_id))
+            radio_button.grid(row=i, column=3, padx=10, pady=5)
+
+        # Update scrollable region for the canvas
+        self.scrollable_frame.update_idletasks()
+        self.canvas.config(scrollregion=self.canvas.bbox("all"))
+
+    def retrieve_seats(self):
+        # Retrieve all columns from the seat table
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM seat;")
+            return cur.fetchall()  # Assuming it returns rows in the format (seat_id, seat_no, location, ...)
+
+    def go_to_next_frame(self):
+        selected_seat = self.selected_seat.get()
+
+        if selected_seat:
+            messagebox.showinfo("Booking", f"Seat ID {selected_seat} selected successfully!")
             self.app.show_frame("books_frame")
-            # self.app.root.destroy()
         else:
-            messagebox.showerror("Error", "Choose a Valid Seat Number and Seat Location")
+            messagebox.showerror("Error", "Please select a seat before proceeding.")
 
     def pack_frame(self):
         self.frame.pack(pady=40)
@@ -203,6 +243,9 @@ class BooksFrame:
         self.selected_books = []
         
         self.frame = ttk.Frame(app.root)
+
+        self.confirm_button = ttk.Button(self.frame, text="Confirm Selection", command=self.confirm_selection)
+        self.confirm_button.pack(pady=10)
 
         self.canvas = tk.Canvas(self.frame, width=1000, height=600)
         self.scrollbar_y = ttk.Scrollbar(self.frame, orient="vertical", command=self.canvas.yview)
@@ -221,8 +264,8 @@ class BooksFrame:
         self.create_table_headers()
         self.display_books()
         
-        self.confirm_button = ttk.Button(self.frame, text="Confirm Selection", command=self.confirm_selection)
-        self.confirm_button.pack(pady=10)
+        # Create a separate frame for the button and use grid on it
+        
 
     def create_table_headers(self):
         headers = ["Book Name", "Author", "ISBN", "Publisher", "Select"]
@@ -284,6 +327,18 @@ class BooksFrame:
 
     def hide_frame(self):
         self.frame.pack_forget()
+
+class Logs:
+    def __init__(self,app):
+        self.app = app
+        self.frame = ttk.Frame(app.root)
+    
+    def retrieve_logs():
+        with conn.cursor as cur:
+            cur.execute("SELECT seat_id,start_time,end_time from booking;")
+            logs = cur.fetchall()
+
+
 
 
 # Initialize and run the application

@@ -278,6 +278,8 @@ class BookingAddBookPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
+        
+
 class BookingFinalizepage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -293,6 +295,7 @@ class HomePage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
+
 class windows(tk.Tk):
     data = dict()
     def __init__(self, *args, **kwargs):
@@ -301,10 +304,11 @@ class windows(tk.Tk):
         self.wm_title("Library Seat Management app")
         self.geometry("500x600")
         
-        style = ttk.Style()
-        style.configure('TLabel', font=('Helvetica', 12), padding=5)
-        style.configure('TButton', font=('Helvetica', 10), padding=5)
-        style.configure('TEntry', font=('Helvetica', 10), padding=5)
+        self.style = ttk.Style()
+        self.style.configure('TLabel', font=('Helvetica', 12), padding=5)
+        self.style.configure('TButton', font=('Helvetica', 10), padding=5)
+        self.style.configure('TEntry', font=('Helvetica', 10), padding=5)
+
         # self.wm_minsize = (1280,720)
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         # creating a frame and assigning it to container
