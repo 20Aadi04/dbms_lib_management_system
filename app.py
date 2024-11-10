@@ -30,6 +30,7 @@ class LoginPage(tk.Frame):
 
         ttk.Label(self, text="Student ID: ").grid(row=0, column=0, pady=20, padx=10)
         self.student_id_entry = ttk.Entry(self)
+        self.student_id_entry.insert(0,"20221232")
         self.student_id_entry.grid(row=0, column=1, pady=20, padx=10)
         
         ttk.Label(self, text="Password: ").grid(row=1, column=0, pady=20, padx=10)
@@ -123,14 +124,34 @@ class SeatInfo(tk.Frame):
         ttk.Label(self,text= f"{seat_info['location']}").pack(side="left")
         ttk.Label(self,text= "seat no :").pack(side="left")
         ttk.Label(self,text= f"{seat_info['seat_no']}").pack(side="left")
-        ttk.Button(self,text="select" ,command=lambda :_callback(seat_info))
+        ttk.Button(self,text="select" ,command=lambda :_callback(seat_info)).pack(side='left')
     
 class ScrollableTable(tk.Frame):
     def __init__(self,parent,Widget,callback,infos):
+
         self.Widget = Widget
         self.callback = callback
         tk.Frame.__init__(self, parent)
-        ttk.Scrollbar(self).pack(side=tk.RIGHT)
+
+        self.canvas = tk.Canvas(self)
+        
+        scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.scrollable_frame = ttk.Frame(self.canvas)
+
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(
+                scrollregion=self.canvas.bbox("all")
+            )
+        )
+
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+
+        self.canvas.configure(yscrollcommand=scrollbar.set)
+
+        self.canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
         self.widgets = []
         self.update(infos)
 
@@ -141,8 +162,8 @@ class ScrollableTable(tk.Frame):
         self.widgets = []
         for info in infos:
             print('added ' ,info)
-            self.widgets.append(self.Widget(self,self.callback,info))
-            self.widgets[-1].pack(side=tk.TOP)
+            self.widgets.append(self.Widget(self.scrollable_frame,self.callback,info))
+            self.widgets[-1].pack(side=tk.TOP, fill="x")
         self.tkraise()
 
 
@@ -184,6 +205,8 @@ class BookingTimeSlotPage(tk.Frame):
     
     def select_seat(self,info):
         self.controller.data['cur_seat_info'] = info
+        self.controller.show_frame(BookingAddBookPage)
+
 
 
     def correct_slider(self,*args):
