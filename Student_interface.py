@@ -200,58 +200,84 @@ class SeatBookingFrame:
 class BooksFrame:
     def __init__(self, app):
         self.app = app
+        self.selected_books = []
+        
         self.frame = ttk.Frame(app.root)
 
-        # Canvas setup
-        self.canvas = tk.Canvas(self.frame)
-        
-        
-        # Vertical Scrollbar
+        self.canvas = tk.Canvas(self.frame, width=1000, height=600)
         self.scrollbar_y = ttk.Scrollbar(self.frame, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.scrollbar_y.set)
         
-        # Horizontal Scrollbar
         self.scrollbar_x = ttk.Scrollbar(self.frame, orient="horizontal", command=self.canvas.xview)
         self.canvas.configure(xscrollcommand=self.scrollbar_x.set)
 
-        # Scrollable frame for the book list
-        self.scrollable_frame = ttk.Frame(self.canvas)  # Use ttk.Frame for the content inside the canvas
+        self.scrollable_frame = ttk.Frame(self.canvas)
         self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
 
-        # Pack the scrollbars and canvas
         self.scrollbar_y.pack(side="right", fill="y")
         self.scrollbar_x.pack(side="bottom", fill="x")
         self.canvas.pack(side="left", fill="both", expand=True)
 
-        # Display the books
+        self.create_table_headers()
         self.display_books()
+        
+        self.confirm_button = ttk.Button(self.frame, text="Confirm Selection", command=self.confirm_selection)
+        self.confirm_button.pack(pady=10)
+
+    def create_table_headers(self):
+        headers = ["Book Name", "Author", "ISBN", "Publisher", "Select"]
+        for col, header in enumerate(headers):
+            label = ttk.Label(self.scrollable_frame, text=header, font=('Helvetica', 12, 'bold'), anchor="center")
+            label.grid(row=0, column=col, padx=5, pady=10, sticky="nsew")
 
     def display_books(self):
-        # Retrieve books from the database
         books = self.retrieve_books()
-        print(books)
+        self.check_vars = []
 
-        for i, book in enumerate(books):
+        for i, book in enumerate(books, start=1):
             book_id, b_name, isbn, author, publisher, category = book
-            
-            # Book info label with ttk
-            book_label = ttk.Label(self.scrollable_frame, text=f"{b_name} by {author} ({isbn})", font=('Helvetica', 12))
-            book_label.grid(row=i, column=0, sticky="w", padx=10, pady=5)
 
-            # Checkbox for each book with ttk
+            cells = [
+                b_name,
+                author,
+                isbn,
+                publisher
+            ]
+
+            for col, text in enumerate(cells):
+                label = ttk.Label(self.scrollable_frame, text=text, font=('Helvetica', 10), anchor="w")
+                label.grid(row=i, column=col, padx=5, pady=5, sticky="w")
+
             var = tk.IntVar()
-            checkbox = ttk.Checkbutton(self.scrollable_frame, text="Select", variable=var)
-            checkbox.grid(row=i, column=1, padx=10, pady=5)
+            checkbox = ttk.Checkbutton(self.scrollable_frame, variable=var, command=lambda var=var, book=book: self.limit_selection(var, book))
+            checkbox.grid(row=i, column=4, padx=5, pady=5)
+            self.check_vars.append(var)
 
-        # Update canvas scroll region
         self.scrollable_frame.update_idletasks()
         self.canvas.config(scrollregion=self.canvas.bbox("all"))
 
+    def limit_selection(self, var, book):
+        if var.get() == 1:
+            if len(self.selected_books) < 3:
+                self.selected_books.append(book)
+            else:
+                var.set(0)
+                messagebox.showwarning("Selection Limit", "You can only select up to 3 books.")
+        else:
+            self.selected_books.remove(book)
+
     def retrieve_books(self):
-        # Connect to the database and fetch book records
         with conn.cursor() as cur:
             cur.execute("SELECT * FROM book;")
             return cur.fetchall()
+
+    def confirm_selection(self):
+        if not self.selected_books:
+            messagebox.showinfo("No Selection", "Please select at least one book.")
+        else:
+            selected_titles = [book[1] for book in self.selected_books]
+            messagebox.showinfo("Books Selected", f"Selected books: {', '.join(selected_titles)}")
+            # Implement save or further processing of selected_books here
 
     def pack_frame(self):
         self.frame.pack(pady=40)
@@ -259,8 +285,10 @@ class BooksFrame:
     def hide_frame(self):
         self.frame.pack_forget()
 
+
 # Initialize and run the application
 root = tk.Tk()
+
 load_dotenv()
 database_url = os.getenv('DATABASE_URL')
 print(database_url)
