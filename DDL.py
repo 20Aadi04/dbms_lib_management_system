@@ -11,8 +11,8 @@ conn = psycopg2.connect(database_url)
 
 with conn.cursor() as cur:
     cur.execute("SELECT version()")
-
-    cur.execute("CREATE TYPE grad_type AS ENUM ('FIRST DEGREE', 'HIGHER DEGREE');")
+ 
+    # cur.execute("CREATE TYPE grad_type AS ENUM ('FIRST DEGREE', 'HIGHER DEGREE');")
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS Student (
@@ -21,7 +21,7 @@ with conn.cursor() as cur:
         LName VARCHAR(255) NOT NULL,
         DOB DATE NOT NULL,
         Grad_Type grad_type NOT NULL,
-        Permitted_Book_count INT NOT NULL,
+        Permitted_Book_count INT NOT NULL DEFAULT 3,
         email VARCHAR(255) NOT NULL,
         Phone_Num BIGINT NOT NULL UNIQUE
     );

@@ -12,15 +12,15 @@ from tkcalendar import DateEntry
 # class MainPage(tk.Frame):
 #     def __init__(self, parent, controller):
 #         tk.Frame.__init__(self, parent)
+#         self.controller = controller
 #         label = tk.Label(self, text="Main Page")
 #         label.pack(padx=10, pady=10)
-
 #         # We use the switch_window_button in order to call the show_frame() method as a lambda function
-        # switch_window_button = tk.Button(
-        #     self,
-        #     text="Go to the Side Page",
-        #     command=lambda: controller.show_frame(SidePage),
-        # )
+#         switch_window_button = tk.Button(
+#             self,
+#             text="Go to the Side Page",
+#             command=lambda: controller.show_frame(SidePage),
+#         )
 #         switch_window_button.pack(side="bottom", fill=tk.X)
 
 class LoginPage(tk.Frame):
@@ -80,9 +80,13 @@ class RegistrationPage(tk.Frame):
         self.phone_number_entry = ttk.Entry(self)
         self.phone_number_entry.grid(row=4, column=1, pady=10, padx=10)
 
-        ttk.Label(self, text="Graduation Type: ").grid(row=5, column=0, pady=10, padx=10)
-        self.grad_type_entry = ttk.Entry(self)
-        self.grad_type_entry.grid(row=5, column=1, pady=10, padx=10)
+        ttk.Label(self, text="Graduation Type: ").grid(row=5, column=0,  pady=10, padx=10)
+        self.grad_type_var = tk.StringVar() 
+        self.grad_type_combobox = ttk.Combobox(self,textvariable = self.grad_type_var)
+        # self.grad_type_entry = ttk.Entry(self)
+        self.grad_type_combobox['values'] = ('FIRST DEGREE','SECOND DEGREE')
+        self.grad_type_combobox.current(0)
+        self.grad_type_combobox.grid(row=5, column=1, pady=10, padx=10)
 
         ttk.Label(self, text="Date of Birth: ").grid(row=6, column=0, pady=10, padx=10)
         # self.dob_entry = ttk.Entry(self)
@@ -100,7 +104,7 @@ class RegistrationPage(tk.Frame):
         student_id =  self.student_id_entry_reg.get()
         email =  self.email_entry.get()
         phone_number =  self.phone_number_entry.get()
-        grad_type =  self.grad_type_entry.get()
+        grad_type =  self.grad_type_var.get()
         dob =  self.dob_entry.get()
         if (first_name and last_name and student_id and email and phone_number and grad_type and dob):
             # regitster query
@@ -281,7 +285,7 @@ class BookingAddBookPage(tk.Frame):
         self.confirm_button = ttk.Button(self, text="Confirm Selection", command=self.confirm_selection)
         self.confirm_button.pack(pady=10)
 
-        self.canvas = tk.Canvas(self, width=1000, height=600)
+        self.canvas = tk.Canvas(self)
         self.scrollbar_y = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.scrollbar_y.set)
         
@@ -411,7 +415,6 @@ class windows(tk.Tk):
             frame.grid(row=0, column=0, sticky="nsew")
 
    
-
 
         # Using a method to switch frames
         self.show_frame(LoginPage)
