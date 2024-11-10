@@ -277,9 +277,86 @@ class BookingAddBookPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.selected_books = []
+        self.confirm_button = ttk.Button(self, text="Confirm Selection", command=self.confirm_selection)
+        self.confirm_button.pack(pady=10)
 
+        self.canvas = tk.Canvas(self, width=1000, height=600)
+        self.scrollbar_y = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.scrollbar_y.set)
+        
+        self.scrollbar_x = ttk.Scrollbar(self, orient="horizontal", command=self.canvas.xview)
+        self.canvas.configure(xscrollcommand=self.scrollbar_x.set)
+
+        self.scrollable_frame = ttk.Frame(self.canvas)
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+
+        self.scrollbar_y.pack(side="right", fill="y")
+        self.scrollbar_x.pack(side="bottom", fill="x")
+        self.canvas.pack(side="left", fill="both", expand=True)
+
+        self.create_table_headers()
+        self.display_books()
+        
+        # Create a separate frame for the button and use grid on it
         
 
+    def create_table_headers(self):
+        headers = ["Book Name", "Author", "ISBN", "Publisher", "Select"]
+        for col, header in enumerate(headers):
+            label = ttk.Label(self.scrollable_frame, text=header, font=('Helvetica', 12, 'bold'), anchor="center")
+            label.grid(row=0, column=col, padx=5, pady=10, sticky="nsew")
+
+    def display_books(self):
+        books = self.retrieve_books()
+        self.check_vars = []
+
+        for i, book in enumerate(books, start=1):
+            book_id, b_name, isbn, author, publisher, category = book
+
+            cells = [
+                b_name,
+                author,
+                isbn,
+                publisher
+            ]
+
+            for col, text in enumerate(cells):
+                label = ttk.Label(self.scrollable_frame, text=text, font=('Helvetica', 10), anchor="w")
+                label.grid(row=i, column=col, padx=5, pady=5, sticky="w")
+
+            var = tk.IntVar()
+            checkbox = ttk.Checkbutton(self.scrollable_frame, variable=var, command=lambda var=var, book=book: self.limit_selection(var, book))
+            checkbox.grid(row=i, column=4, padx=5, pady=5)
+            self.check_vars.append(var)
+
+        self.scrollable_frame.update_idletasks()
+        self.canvas.config(scrollregion=self.canvas.bbox("all"))
+
+    def limit_selection(self, var, book):
+        if var.get() == 1:
+            if len(self.selected_books) < 3:
+                self.selected_books.append(book)
+            else:
+                var.set(0)
+                messagebox.showwarning("Selection Limit", "You can only select up to 3 books.")
+        else:
+            self.selected_books.remove(book)
+
+    def retrieve_books(self):
+        with self.controller.conn.cursor() as cur:
+            cur.execute("SELECT * FROM book;")
+            return cur.fetchall()
+
+    def confirm_selection(self):
+        if not self.selected_books:
+            messagebox.showinfo("No Selection", "Please select at least one book.")
+        else:
+            selected_titles = [book[1] for book in self.selected_books]
+            self.controller.data['selected_books'] =self.selected_books
+            messagebox.showinfo("Books Selected", f"Selected books: {', '.join(selected_titles)}")
+            # Implement save or further processing of selected_books here
+        
 class BookingFinalizepage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -321,6 +398,10 @@ class windows(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
         # We will now create a dictionary of frames
         self.frames = {}
+
+        load_dotenv()
+        database_url = os.getenv('DATABASE_URL')
+        self.conn = psycopg2.connect(database_url)
         # we'll create the frames themselves later but let's add the components to the dictionary.
         for F in (LoginPage,BookingTimeSlotPage,RegistrationPage,BookingAddBookPage,BookingFinalizepage,BookingInformationPage,HomePage):
             frame = F(container, self)
@@ -329,9 +410,8 @@ class windows(tk.Tk):
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
 
-        load_dotenv()
-        database_url = os.getenv('DATABASE_URL')
-        self.conn = psycopg2.connect(database_url)
+   
+
 
         # Using a method to switch frames
         self.show_frame(LoginPage)
