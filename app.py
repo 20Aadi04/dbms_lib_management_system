@@ -48,7 +48,7 @@ class LoginPage(tk.Frame):
             if(user_data):
                 self.controller.data['user_data'] = user_data
                 self.controller.data['student_id'] = self.student_id_entry.get()
-                self.controller.show_frame(BookingPage)
+                self.controller.show_frame(BookingTimeSlotPage)
             else :
                 messagebox.showerror("Error", "user id not found")
     
@@ -112,11 +112,7 @@ class RegistrationPage(tk.Frame):
             messagebox.showerror("Error", "Please Enter data properly")
     
 
-
-
-
-    
-class BookingPage(tk.Frame):
+class BookingTimeSlotPage(tk.Frame):
     max_time_span = 4*60 #minutes
     min_time_span = 60 #minutes
 
@@ -211,8 +207,28 @@ class BookingPage(tk.Frame):
             cur.execute(insert_query, (self.controller.data['student_id'], seat_id, start_time, end_time))
         self.controller.conn.commit()
 
+class BookingAddBookPage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+
+class BookingFinalizepage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+
+class BookingInformationPage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+
+class HomePage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+
 class windows(tk.Tk):
-    data= dict()
+    data = dict()
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         # Adding a title to the window
@@ -236,13 +252,12 @@ class windows(tk.Tk):
         # We will now create a dictionary of frames
         self.frames = {}
         # we'll create the frames themselves later but let's add the components to the dictionary.
-        for F in (LoginPage,BookingPage,RegistrationPage):
+        for F in (LoginPage,BookingTimeSlotPage,RegistrationPage,BookingAddBookPage,BookingFinalizepage,BookingInformationPage,HomePage):
             frame = F(container, self)
 
             # the windows class acts as the root window for the frames.
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
-
 
         load_dotenv()
         database_url = os.getenv('DATABASE_URL')
