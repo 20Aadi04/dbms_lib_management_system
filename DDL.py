@@ -12,13 +12,16 @@ conn = psycopg2.connect(database_url)
 with conn.cursor() as cur:
     cur.execute("SELECT version()")
 
+    cur.execute("CREATE TYPE grad_type AS ENUM ('FIRST DEGREE', 'HIGHER DEGREE');")
+
     cur.execute("""
     CREATE TABLE IF NOT EXISTS Student (
         Student_ID INT PRIMARY KEY,
         FName VARCHAR(255) NOT NULL,
         LName VARCHAR(255) NOT NULL,
         DOB DATE NOT NULL,
-        Grad_Type VARCHAR(255) NOT NULL,
+        Grad_Type grad_type NOT NULL,
+        Permitted_Book_count INT NOT NULL,
         email VARCHAR(255) NOT NULL,
         Phone_Num BIGINT NOT NULL UNIQUE
     );
@@ -26,7 +29,7 @@ with conn.cursor() as cur:
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS Book (
-        B_ID INT PRIMARY KEY,
+        B_ID SERIAL PRIMARY KEY,
         B_Name VARCHAR(255) NOT NULL,
         ISBN VARCHAR(255) NOT NULL,
         Authors VARCHAR(255),
@@ -48,7 +51,7 @@ with conn.cursor() as cur:
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS Seat (
-        Seat_ID INT PRIMARY KEY,
+        Seat_ID SERIAL PRIMARY KEY,
         Location VARCHAR(255) NOT NULL,
         Seat_No INT NOT NULL
     );
@@ -60,6 +63,7 @@ with conn.cursor() as cur:
         Seat_ID INT,
         Start_Time TIMESTAMP NOT NULL,
         End_Time TIMESTAMP NOT NULL,
+        Book_ids VARCHAR(255) [] NOT NULL,
         PRIMARY KEY(Student_ID,Start_Time,Seat_ID),
         FOREIGN KEY (Student_ID) REFERENCES Student(Student_ID)
         ON UPDATE CASCADE
