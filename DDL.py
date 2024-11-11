@@ -32,7 +32,7 @@ with conn.cursor() as cur:
         B_ID SERIAL PRIMARY KEY,
         B_Name VARCHAR(255) NOT NULL,
         ISBN VARCHAR(255) NOT NULL,
-        Authors VARCHAR(255),
+        Authors VARCHAR(255) [],
         Pub VARCHAR(255) NOT NULL,
         Category VARCHAR(255) NOT NULL
     );
