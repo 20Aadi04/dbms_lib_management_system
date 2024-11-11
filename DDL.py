@@ -63,7 +63,7 @@ with conn.cursor() as cur:
         Seat_ID INT,
         Start_Time TIMESTAMP NOT NULL,
         End_Time TIMESTAMP NOT NULL,
-        Book_ids VARCHAR(255) [] NOT NULL,
+        Book_ids SERIAL [],
         PRIMARY KEY(Student_ID,Start_Time,Seat_ID),
         FOREIGN KEY (Student_ID) REFERENCES Student(Student_ID)
         ON UPDATE CASCADE
@@ -73,6 +73,7 @@ with conn.cursor() as cur:
         ON DELETE CASCADE
     );
     """)
+
 
     cur.execute("SELECT * FROM STUDENT;")
     data = cur.fetchall()
