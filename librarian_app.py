@@ -1,6 +1,9 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import timedelta, datetime
+import psycopg2
+from dotenv import load_dotenv
+import os
 import sys
 
 class Window:
@@ -58,6 +61,47 @@ class AddSeats:
         self.controller = controller
         self.frame = ttk.Frame(controller.root)
 
+        ttk.Label(self.frame, text = "Location").grid(row = 0, column = 0, padx = 10, pady = 40)
+        ttk.Label(self.frame, text = "Seat Number").grid(row = 1, column = 0, padx = 10, pady = 40)
+
+        self.selected_location = tk.StringVar()
+        self.selected_location.set("Select Seat Location")
+        
+        dropdown = ttk.Combobox(self.frame, textvariable=self.selected_location, values=["UP","FRONT","LEFT","RIGHT","BACK","CENTRE"], state="readonly")
+        dropdown.grid(row=0, column=1, padx=10, pady=40)
+
+        self.seat_number_var = tk.StringVar()
+        self.seat_number_var.set("")
+        ttk.Label(self.frame, textvariable=self.seat_number_var).grid(row = 1, column = 1,padx = 10, pady = 10)
+        self.selected_location.trace("w", self.update_seat_number)
+
+        ttk.Button(self.frame, text = "Insert Seat", command = self.insert_seat).grid(row = 2,column = 0, padx = 10, pady = 20)
+        ttk.Button(self.frame, text = "Back",command = self.go_back).grid(row = 2, column = 1, padx = 10, pady = 10)
+
+    def update_seat_number(self, *args):
+        with conn.cursor() as cur:            
+            cur.execute(f"""
+                SELECT number from (select generate_series(1,100) as number)
+                WHERE number NOT IN (SELECT seat_no from seat
+                WHERE location = '{self.selected_location.get()}')        
+                ORDER BY number;           
+            """)
+            self.valid_seat_num = cur.fetchone()[0]
+            self.seat_number_var.set(self.valid_seat_num)
+
+    def insert_seat(self):
+        if self.selected_location.get() == "Select Seat Location":
+            messagebox.showerror("Error","Chose a Seat Location")
+            return None
+        with conn.cursor() as cur:
+            cur.execute(f"Insert into seat (location,seat_no) VALUES {self.selected_location.get(),self.valid_seat_num}")
+        conn.commit()
+        messagebox.showinfo("Message","Added the Seat")
+        self.update_seat_number(self)
+
+    def go_back(self):
+        self.controller.show_frame('Main_screen')
+
     def pack_frame(self):
         self.frame.pack()
 
@@ -65,6 +109,14 @@ class ChangeSeats:
     def __init__(self, controller):
         self.controller = controller
         self.frame = ttk.Frame(controller.root)
+
+        ttk.Label(self.frame, text = "Location").grid(row = 0, column = 0, padx = 10, pady = 40)
+        ttk.Label(self.frame, text = "Seat Number").grid(row = 1, column = 0, padx = 10, pady = 40)
+
+        self.selected_location = tk.StringVar()
+        self.selected_location.set("")
+        dropdown = ttk.Combobox(self.frame, textvariable=self.selected_location, values=["UP","FRONT","LEFT","RIGHT","BACK","CENTRE"], state="readonly")
+        dropdown.grid(row=0, column=1, padx=10, pady=40)
 
     def pack_frame(self):
         self.frame.pack()
@@ -86,6 +138,11 @@ class ChangeBooks:
         self.frame.pack()
 
 if __name__ == '__main__':
+    load_dotenv()
+    database_url = os.getenv('DATABASE_URL')
+    print(database_url)
+    conn = psycopg2.connect(database_url)
+    
     root = tk.Tk()
     Window(root)
     root.mainloop()
