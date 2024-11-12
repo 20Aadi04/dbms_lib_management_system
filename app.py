@@ -438,7 +438,7 @@ class HomePage(tk.Frame):
 
 
 class windows(tk.Tk):
-    data = dict()
+    data = {'stime':"",'etime':"",'cur_seat_info':{'location' : "" ,'seat_no' : None,'seat_id' :None },'Book_logs':[]}
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         # Adding a title to the window
