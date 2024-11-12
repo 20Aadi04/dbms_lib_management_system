@@ -365,7 +365,6 @@ class BookingAddBookPage(tk.Frame):
             self.controller.data['selected_books'] =self.selected_books
             messagebox.showinfo("Books Selected", f"Selected books: {', '.join(selected_titles)}")
             self.controller.show_frame(BookingFinalizepage)
-            self.controller.frames[BookingFinalizepage].display_summary()
             # Implement save or further processing of selected_books here
 
         
@@ -373,6 +372,7 @@ class BookingFinalizepage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.display_summary()
 
     def display_summary(self):
         print(self.controller.data)
