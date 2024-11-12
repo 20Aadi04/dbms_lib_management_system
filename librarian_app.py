@@ -37,7 +37,7 @@ class MainScreen:
 
         ttk.Label(self.frame, text="Librarian Controls").grid(row=0, column=0)
         ttk.Button(self.frame, text="Add Seat", command=self.increase_seat).grid(row=1, column=0)
-        ttk.Button(self.frame, text="Modify Seat", command=self.change_seat).grid(row=1, column=1)
+        ttk.Button(self.frame, text="Remove Seat", command=self.change_seat).grid(row=1, column=1)
         ttk.Button(self.frame, text="Add Book", command=self.increase_book).grid(row=2, column=0)
         ttk.Button(self.frame, text="Modify Book", command=self.change_book).grid(row=2, column=1)
 
@@ -75,8 +75,9 @@ class AddSeats:
         ttk.Label(self.frame, textvariable=self.seat_number_var).grid(row = 1, column = 1,padx = 10, pady = 10)
         self.selected_location.trace("w", self.update_seat_number)
 
-        ttk.Button(self.frame, text = "Insert Seat", command = self.insert_seat).grid(row = 2,column = 0, padx = 10, pady = 20)
-        ttk.Button(self.frame, text = "Back",command = self.go_back).grid(row = 2, column = 1, padx = 10, pady = 10)
+        ttk.Button(self.frame, text = "Back",command = self.go_back).grid(row = 2, column = 0, padx = 10, pady = 10)
+        ttk.Button(self.frame, text = "Insert Seat", command = self.insert_seat).grid(row = 2,column = 1, padx = 10, pady = 20)
+       
 
     def update_seat_number(self, *args):
         with conn.cursor() as cur:            
@@ -105,21 +106,68 @@ class AddSeats:
     def pack_frame(self):
         self.frame.pack()
 
+import tkinter as tk
+from tkinter import ttk, messagebox
+
 class ChangeSeats:
     def __init__(self, controller):
         self.controller = controller
         self.frame = ttk.Frame(controller.root)
 
-        ttk.Label(self.frame, text = "Location").grid(row = 0, column = 0, padx = 10, pady = 40)
-        ttk.Label(self.frame, text = "Seat Number").grid(row = 1, column = 0, padx = 10, pady = 40)
+        ttk.Label(self.frame, text="Location").grid(row=0, column=0, padx=10, pady=40)
 
         self.selected_location = tk.StringVar()
-        self.selected_location.set("")
-        dropdown = ttk.Combobox(self.frame, textvariable=self.selected_location, values=["UP","FRONT","LEFT","RIGHT","BACK","CENTRE"], state="readonly")
-        dropdown.grid(row=0, column=1, padx=10, pady=40)
+        self.selected_location.set("Select a Location")
+        self.dropdown = ttk.Combobox(self.frame, textvariable=self.selected_location, values=["UP", "FRONT", "LEFT", "RIGHT", "BACK", "CENTRE"], state="readonly")
+        self.dropdown.grid(row=0, column=1, padx=10, pady=40)
+        self.selected_location.trace("w", self.update_seat_values)
+
+        ttk.Label(self.frame, text="Seat Number").grid(row=1, column=0, padx=10, pady=40)
+        self.seat_value = tk.StringVar()
+        self.seat_dropdown = ttk.Combobox(self.frame, textvariable=self.seat_value, state="readonly")
+        self.seat_dropdown.grid(row=1, column=1, padx=10, pady=10)
+
+        ttk.Button(self.frame, text="Back", command=self.go_back).grid(row=2, column=0, padx=10, pady=10)
+        ttk.Button(self.frame, text="Confirm", command=self.delete_seat).grid(row=2, column=1, padx=10, pady=10)
+
+    def update_seat_values(self, *args):
+        location = self.selected_location.get()
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT seat_no FROM seat WHERE location = '{location}';")
+            seat_values = [row[0] for row in cur.fetchall()]
+
+        seat_values.sort()
+        self.seat_dropdown['values'] = seat_values
+        if seat_values == []:
+            self.seat_value.set("NULL")
+            messagebox.showinfo("Message","All Seats corresponding to this location are deleted")
+        else:
+            self.seat_value.set(seat_values[-1])
+
+    def delete_seat(self):
+        if self.selected_location.get() == "Select a Location":
+            messagebox.showerror("Error","Select a Location")
+            return None
+        
+        if self.seat_value.get() == "NULL":
+            messagebox.showinfo("Message","Chose Another Location to proceed")
+            return None
+        
+        ok = messagebox.askokcancel("Confirmation", "Do you want to confirm")
+        if not ok:
+            return
+        with conn.cursor() as cur:
+            cur.execute(f"DELETE FROM seat WHERE location = '{self.selected_location.get()}' AND seat_no = '{self.seat_value.get()}';")
+        conn.commit()
+        messagebox.showinfo("Info", "Seat deleted successfully.")
+        self.controller.show_frame('Main_screen')
+
+    def go_back(self):
+        self.controller.show_frame('Main_screen')
 
     def pack_frame(self):
         self.frame.pack()
+
 
 class AddBooks:
     def __init__(self, controller):
