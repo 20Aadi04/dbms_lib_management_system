@@ -354,7 +354,9 @@ class BookingAddBookPage(tk.Frame):
     def retrieve_books(self):
         with self.controller.conn.cursor() as cur:
             cur.execute("SELECT * FROM book;")
-            return cur.fetchall()
+            l = cur.fetchall()
+            print(l)
+            return l
 
     def confirm_selection(self):
         if not self.selected_books:
@@ -367,6 +369,54 @@ class BookingAddBookPage(tk.Frame):
             self.controller.show_frame(BookingFinalizepage)
             # Implement save or further processing of selected_books here
 
+class BookingDetails(tk.Frame):
+    def __init__(self, parent, seat_info, books):
+        super().__init__(parent)
+
+        canvas = tk.Canvas(self)
+        scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        self.scrollable_frame = scrollable_frame
+
+        bold_font = font(weight="bold")
+
+        ttk.Label(scrollable_frame, text="Seat Details", padding=10, font=bold_font).pack(side="top")
+        seat_frame = ttk.Frame(scrollable_frame, padding=10, borderwidth=2, relief="solid")
+        ttk.Label(seat_frame, text=f"Seat No:", padding=(5, 5), font=bold_font).grid(row=0, column=0, sticky="w")
+        ttk.Label(seat_frame, text=f"{seat_info['seat_no']}", padding=(5, 5)).grid(row=0, column=1, sticky="w")
+        ttk.Label(seat_frame, text=f"Seat Location:", padding=(5, 5), font=bold_font).grid(row=1, column=0, sticky="w")
+        ttk.Label(seat_frame, text=f"{seat_info['seat_loc']}", padding=(5, 5)).grid(row=1, column=1, sticky="w")
+        ttk.Label(seat_frame, text=f"Start Time:", padding=(5, 5), font=bold_font).grid(row=2, column=0, sticky="w")
+        ttk.Label(seat_frame, text=f"{seat_info['start_time']}", padding=(5, 5)).grid(row=2, column=1, sticky="w")
+        ttk.Label(seat_frame, text=f"End Time:", padding=(5, 5), font=bold_font).grid(row=3, column=0, sticky="w")
+        ttk.Label(seat_frame, text=f"{seat_info['end_time']}", padding=(5, 5)).grid(row=3, column=1, sticky="w")
+        seat_frame.pack(side="top", pady=10)
+
+        ttk.Label(scrollable_frame, text="Book Details", padding=10, font=bold_font).pack(side="top")
+        for book in books:
+            book_frame = ttk.Frame(scrollable_frame, padding=10, borderwidth=2, relief="solid")
+            ttk.Label(book_frame, text=f"Book Name:", padding=(5, 5), font=bold_font).grid(row=0, column=0, sticky="w")
+            ttk.Label(book_frame, text=f"{book['book_name']}", padding=(5, 5)).grid(row=0, column=1, sticky="w")
+            ttk.Label(book_frame, text=f"ISBN:", padding=(5, 5), font=bold_font).grid(row=1, column=0, sticky="w")
+            ttk.Label(book_frame, text=f"{book['isbn']}", padding=(5, 5)).grid(row=1, column=1, sticky="w")
+            ttk.Label(book_frame, text=f"Publisher:", padding=(5, 5), font=bold_font).grid(row=2, column=0, sticky="w")
+            ttk.Label(book_frame, text=f"{book['pub']}", padding=(5, 5)).grid(row=2, column=1, sticky="w")
+            ttk.Label(book_frame, text=f"Authors:", padding=(5, 5), font=bold_font).grid(row=3, column=0, sticky="w")
+            ttk.Label(book_frame, text=f"{', '.join(book['authors'])}", padding=(5, 5)).grid(row=3, column=1, sticky="w")
+            book_frame.pack(side="top", pady=5)
+        
         
 class BookingFinalizepage(tk.Frame):
     def __init__(self, parent, controller):
