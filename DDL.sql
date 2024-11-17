@@ -40,8 +40,17 @@ CREATE TABLE IF NOT EXISTS Booking (
     Seat_ID INT,
     Start_Time TIMESTAMP NOT NULL,
     End_Time TIMESTAMP NOT NULL,
-    Book_ids SERIAL [],
-    PRIMARY KEY(Student_ID, Start_Time, Seat_ID),
+    /* Book_ids SERIAL [], */
+    PRIMARY KEY(Student_ID, Start_Time),
     FOREIGN KEY (Student_ID) REFERENCES Student(Student_ID) ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (Seat_ID) REFERENCES Seat(Seat_ID) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS BookingBook_ID(
+Student_ID INT,
+Start_Time TIMESTAMP NOT NULL,
+Book_id INT,
+PRIMARY KEY(Student_ID,Start_Time),
+FOREIGN KEY (Student_ID, Start_Time) REFERENCES Booking(Student_ID, Start_Time) ON UPDATE CASCADE ON DELETE CASCADE,
+FOREIGN KEY (Book_id) REFERENCES Book(b_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
