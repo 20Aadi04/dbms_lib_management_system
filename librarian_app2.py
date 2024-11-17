@@ -23,14 +23,18 @@ class LibraryApp(tk.Tk):
         for F in (MainScreen, AddBook, RemoveBook, AddSeat, RemoveSeat):
             frame = F(container, self)
             self.frames[F] = frame
-            frame.grid(row=0, column=0, sticky="nsew")
+            
+
+            
 
         self.show_frame(MainScreen)
 
     def show_frame(self, cont):
+        self.hide_all()
         frame = self.frames[cont]
-        frame.tkraise()
-
+        frame.pack()
+    def hide_all(self):
+        for f in self.frames.values():f.pack_forget()
     def get_db_connection(self):
      
         return self.conn
@@ -97,7 +101,7 @@ class AddBook(tk.Frame):
         # Inserting a new book
         book_name = self.book_name.get()
         isbn = self.isbn.get()
-        authors = self.authors.get().split(',')
+        authors = "ARRAY["+ ",".join([ "'"+ i +"'" for i in self.authors.get().split(',')]) +"]"
         publisher = self.publisher.get()
         category = self.category.get()
 
@@ -107,11 +111,12 @@ class AddBook(tk.Frame):
 
         with self.controller.get_db_connection() as conn:
             with conn.cursor() as cur:
-                query = """
+                query = f"""
                     INSERT INTO Book (B_Name, ISBN, Authors, Pub, Category)
-                    VALUES (%s, %s, %s, %s, %s)
+                    VALUES (%s, %s,{authors} , %s, %s)
                 """
-                cur.execute(query, (book_name, isbn, authors, publisher, category))
+                print(query)
+                cur.execute(query, (book_name, isbn, publisher, category))
             conn.commit()
         messagebox.showinfo("Success", "Book added successfully.")
         self.clear_entries()
