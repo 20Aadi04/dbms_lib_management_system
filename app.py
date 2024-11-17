@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from tkinter import font
+from tkinter.font import Font
 from RangeSlider.RangeSlider import RangeSliderH
 from datetime import timedelta, datetime
 import os
@@ -110,7 +110,7 @@ class RegistrationPage(tk.Frame):
         if (first_name and last_name and student_id and email and phone_number and grad_type and dob):
             # regitster query
             with self.controller.conn.cursor() as cur:
-                cur.execute(f"insert into student(student_id,fname,lname,dob,grad_type,permitted_book_count,email,phone_num) values ('{student_id}','{first_name}','{last_name}','{dob}','{grad_type}',3,'{email}','{phone_number}')")
+                cur.execute(f"insert into student(student_id,fname,lname,dob,grad_type,email,phone_num) values ('{student_id}','{first_name}','{last_name}','{dob}','{grad_type}','{email}','{phone_number}')")
             self.controller.conn.commit()
             messagebox.showinfo("Registration", "Registration Successful")
             self.controller.show_frame(LoginPage)
@@ -366,7 +366,7 @@ class BookingAddBookPage(tk.Frame):
             selected_titles = [book[1] for book in self.selected_books]
             self.controller.data['selected_books'] =self.selected_books
             messagebox.showinfo("Books Selected", f"Selected books: {', '.join(selected_titles)}")
-            self.controller.show_frame(BookingFinalizepage)
+            self.controller.show_frame(BookingFinalizePage)
             # Implement save or further processing of selected_books here
 
 class BookingDetails(tk.Frame):
@@ -388,9 +388,8 @@ class BookingDetails(tk.Frame):
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        self.scrollable_frame = scrollable_frame
 
-        bold_font = font(weight="bold")
+        bold_font = Font(weight="bold")
 
         ttk.Label(scrollable_frame, text="Seat Details", padding=10, font=bold_font).pack(side="top")
         seat_frame = ttk.Frame(scrollable_frame, padding=10, borderwidth=2, relief="solid")
@@ -418,60 +417,64 @@ class BookingDetails(tk.Frame):
             book_frame.pack(side="top", pady=5)
         
         
-class BookingFinalizepage(tk.Frame):
+class BookingFinalizePage(tk.Frame):
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
+        super().__init__(parent)
         self.controller = controller
         self.display_summary()
 
     def display_summary(self):
-        print(self.controller.data)
-        bold_font = font.Font(weight="bold")
+        bold_font = Font(weight="bold")
 
-        summary = ttk.Label(self, text="Summary",font = bold_font)
-        summary.grid(row=0, column=0, pady=20, padx=0)
+        ttk.Label(self, text="Summary", font=bold_font).grid(row=0, column=0, pady=20, padx=0, columnspan=2)
+
         ttk.Label(self, text="Start Time:").grid(row=1, column=0, pady=0, padx=0)
         ttk.Label(self, text=self.controller.data['stime'].strip()).grid(row=1, column=1, pady=0, padx=0)
+
         ttk.Label(self, text="End Time:").grid(row=2, column=0, pady=0, padx=0)
         ttk.Label(self, text=self.controller.data['etime'].strip()).grid(row=2, column=1, pady=0, padx=0)
 
-        ttk.Label(self,text = "Seat Number: ").grid(row = 3, column = 0, padx = 0, pady = 0)
-        ttk.Label(self,text = self.controller.data['cur_seat_info']['seat_no']).grid(row = 3, column = 1, padx = 0, pady = 0)
-        ttk.Label(self,text = "Seat location: ").grid(row = 4, column = 0, padx = 0, pady = 0)
-        ttk.Label(self,text = self.controller.data['cur_seat_info']['location']).grid(row = 4, column = 1, padx = 0, pady = 0)
+        ttk.Label(self, text="Seat Number:").grid(row=3, column=0, padx=0, pady=0)
+        ttk.Label(self, text=self.controller.data['cur_seat_info']['seat_no']).grid(row=3, column=1, padx=0, pady=0)
 
-        ttk.Label(self, text="Book Logs", font=bold_font).grid(row=5, column=0, padx=0, pady=0)
-        # ttk.Label(self, text="Book ID", font=bold_font).grid(row=6, column=0, padx=0, pady=0)
-        ttk.Label(self, text="Book Name", font=bold_font).grid(row=6, column=0, padx=0, pady=0)
-        ttk.Label(self, text="ISBN", font=bold_font).grid(row=6, column=1, padx=0, pady=0)
-        ttk.Label(self, text="Authors", font=bold_font).grid(row=6, column=2, padx=0, pady=0)
-        ttk.Label(self, text="Publication", font=bold_font).grid(row=6, column=3, padx=0, pady=0)
-        # ttk.Label(self, text="Category", font=bold_font).grid(row=6, column=4, padx=0, pady=0)
+        ttk.Label(self, text="Seat Location:").grid(row=4, column=0, padx=0, pady=0)
+        ttk.Label(self, text=self.controller.data['cur_seat_info']['location']).grid(row=4, column=1, padx=0, pady=0)
 
-        row_count = 7
-        for i in self.controller.data['Book_logs']:
-            for j in range(1,len(i)-1):
-                ttk.Label(self,text = str(i[j])).grid(row = row_count, column = j-1,padx = 0, pady = 0)
-            row_count += 1  
+        seat_info = {
+            "seat_no": self.controller.data['cur_seat_info']['seat_no'],
+            "start_time": self.controller.data['stime'],
+            "end_time": self.controller.data['etime'],
+            "seat_loc": self.controller.data['cur_seat_info']['location'],
+        }
+
+        books = [
+            {
+                "book_name": book[1],
+                "isbn": book[2],
+                "pub": book[4],
+                "authors": book[3].split(","),
+            }
+            for book in self.controller.data['Book_logs']
+        ]
+
+        booking_details = BookingDetails(self, seat_info, books)
+        booking_details.grid(row=5, column=0, columnspan=2, pady=10, padx=0, sticky="nsew")
 
         discard_button = ttk.Button(self, text="Discard Booking", command=self.discard)
-        discard_button.grid(row=row_count + 1, column=0, pady=20, padx=0)
+        discard_button.grid(row=6, column=0, pady=20, padx=0)
 
         finish_registration = ttk.Button(self, text="Finish Booking", command=self.finish)
-        finish_registration.grid(row=row_count + 1, column=1, pady=20, padx=0)
+        finish_registration.grid(row=6, column=1, pady=20, padx=0)
 
     def discard(self):
-        dump = messagebox.askyesno("CONFIRM","BOOKING WILL BE CANCELLED, DO YOU WANT TO PROCEED ?")
-        if dump == True:
+        dump = messagebox.askyesno("CONFIRM", "BOOKING WILL BE CANCELLED, DO YOU WANT TO PROCEED?")
+        if dump:
             self.controller.data.clear()
-            # Type the required query here
             self.controller.show_frame(LoginPage)
-    
+
     def finish(self):
-        messagebox.showinfo("SUCCESS","BOOKING SUCCESSFUL")
-        # Type the required query here
+        messagebox.showinfo("SUCCESS", "BOOKING SUCCESSFUL")
         self.controller.destroy()
-            
 
 
 
@@ -517,7 +520,7 @@ class windows(tk.Tk):
         database_url = os.getenv('DATABASE_URL')
         self.conn = psycopg2.connect(database_url)
         # we'll create the frames themselves later but let's add the components to the dictionary.
-        for F in (LoginPage,BookingTimeSlotPage,RegistrationPage,BookingAddBookPage,BookingFinalizepage,BookingInformationPage,HomePage):
+        for F in (LoginPage,BookingTimeSlotPage,RegistrationPage,BookingAddBookPage,BookingFinalizePage,BookingInformationPage,HomePage):
             frame = F(container, self)
 
             # the windows class acts as the root window for the frames.
