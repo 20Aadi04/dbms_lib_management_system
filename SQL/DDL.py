@@ -10,7 +10,7 @@ print(database_url)
 conn = psycopg2.connect(database_url)
 
 with conn.cursor() as cur:
-    # with open('DDL.sql','r') as file :
+    # with open('SQL/DDL.sql','r') as file :
     #     s = file.read()
     #     cur.execute(s)
 
