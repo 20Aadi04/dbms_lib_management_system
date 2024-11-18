@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 import psycopg2
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
 from psycopg2 import sql
 from dotenv import load_dotenv
 import os
@@ -10,7 +12,7 @@ class LibraryApp(tk.Tk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.wm_title("Library Management System")
-        self.geometry("500x500")
+        self.geometry("700x700")
 
         container = tk.Frame(self)
         container.pack(side="top", fill="both", expand=True)
@@ -20,7 +22,7 @@ class LibraryApp(tk.Tk):
         database_url = os.getenv('DATABASE_URL')
         self.conn = psycopg2.connect(database_url)
         self.frames = {}
-        for F in (MainScreen, AddBook, RemoveBook, AddSeat, RemoveSeat):
+        for F in (MainScreen, AddBook, RemoveBook, AddSeat, RemoveSeat, UserStatistics):
             frame = F(container, self)
             self.frames[F] = frame
             
@@ -63,6 +65,10 @@ class MainScreen(tk.Frame):
         # Button to navigate to Remove Seat
         btn_remove_seat = ttk.Button(self, text="Remove Seat", command=lambda: controller.show_frame(RemoveSeat))
         btn_remove_seat.pack(pady=5)
+
+        btn_user_statistics =  ttk.Button(self, text="User Statistics", command=lambda: controller.show_frame(UserStatistics))
+        btn_user_statistics.pack(pady=5)
+
 
 # Frame for adding a new book
 class AddBook(tk.Frame):
@@ -269,6 +275,144 @@ class RemoveSeat(tk.Frame):
 
         messagebox.showinfo("Success", "Seat removed successfully.")
         self.update_seat_values()
+
+class UserStatistics(tk.Frame):
+    def __init__(self, parent, controller):
+        super().__init__(parent)
+        self.controller = controller
+        
+        ttk.Button(self, text="Show Graphs", command=self.update_graphs).pack(pady=10)
+        ttk.Button(self, text="Back", command=lambda: self.controller.show_frame(MainScreen)).pack(pady=10)
+
+        self.canvas = tk.Canvas(self, height = 600, width = 650)
+        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.scrollable_frame = ttk.Frame(self.canvas)
+
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        )
+
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.canvas.configure(yscrollcommand= self.scrollbar.set)
+
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.scrollbar.pack(side="right", fill="y")
+
+    def update_graphs(self):
+        with self.controller.get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT location, COUNT(location) FROM seat GROUP BY location;")
+                location_stats = cur.fetchall()
+                location, location_count = zip(*location_stats)
+
+        fig = plt.Figure(figsize=(6,6))
+        ax = fig.add_subplot(111)
+        ax.bar(location, location_count, color="skyblue")
+        ax.set_title("Preferred Locations")
+        ax.set_xlabel("Location")
+        ax.set_ylabel("Count")
+        ax.set_xticks(location)
+        ax.set_xticklabels(location, rotation=90, ha="right")
+        fig.tight_layout()
+
+        canvas_plot = FigureCanvasTkAgg(fig, self.scrollable_frame)
+        canvas_plot.get_tk_widget().pack(pady=10)
+
+        with self.controller.get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT b_name, COUNT(b_name),isbn FROM book GROUP BY isbn,b_name;")
+                book_stats = cur.fetchall()
+                book_name, book_count,isbn = zip(*book_stats)
+
+        book_name = list(book_name)
+        for i in range(len(book_name)):
+            if len(book_name[i]) > 20:
+                book_name[i] = book_name[i][:20] + "..."
+
+        fig = plt.Figure(figsize=(6,6))
+        ax = fig.add_subplot(111)
+        ax.bar(book_name, book_count, color="lime")
+        ax.set_title("Preferred Books")
+        ax.set_xlabel("Book Names")
+        ax.set_ylabel("Count")
+        ax.set_xticks(book_name)
+        ax.set_xticklabels(book_name, rotation=90, ha="right")
+        fig.tight_layout()
+
+        # plt.subplots_adjust(bottom=1)
+
+
+        canvas_plot = FigureCanvasTkAgg(fig, self.scrollable_frame)
+        canvas_plot.get_tk_widget().pack(pady=10)
+
+
+        
+        # # Create canvas and scrollbar
+        # canvas = tk.Canvas(self)
+        # scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
+        # scrollable_frame = ttk.Frame(canvas)
+
+        # # Configure canvas and scrollbar
+        # scrollable_frame.bind(
+        #     "<Configure>",
+        #     lambda e: canvas.configure(
+        #         scrollregion=canvas.bbox("all")  # Update scroll region dynamically
+        #     )
+        # )
+        # canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        # canvas.configure(yscrollcommand=scrollbar.set)
+
+        # # Pack canvas and scrollbar to fill the window
+        # canvas.pack(side="left", fill="both", expand=True)
+        # scrollbar.pack(side="right", fill="y")
+
+        # # Most Preferred Location Graph
+        # ttk.Label(scrollable_frame, text="Most Preferred Location").pack(pady=10)
+        # location_fig = plt.Figure(figsize=(5, 3), dpi=100)
+        # location_ax = location_fig.add_subplot(111)
+        # location_ax.bar(["Location A", "Location B", "Location C"], [15, 30, 25], color="skyblue")
+        # location_ax.set_title("Most Preferred Location")
+        # location_ax.set_ylabel("Visits")
+
+        # location_canvas = FigureCanvasTkAgg(location_fig, scrollable_frame)
+        # location_canvas.get_tk_widget().pack()
+
+        # # Most Popular Book Graph
+        # ttk.Label(scrollable_frame, text="Most Popular Book").pack(pady=10)
+        # book_fig = plt.Figure(figsize=(5, 3), dpi=100)
+        # book_ax = book_fig.add_subplot(111)
+        # book_ax.pie(
+        #     [40, 35, 25],
+        #     labels=["Book A", "Book B", "Book C"],
+        #     autopct="%1.1f%%",
+        #     colors=["#ff9999", "#66b3ff", "#99ff99"],
+        # )
+        # book_ax.set_title("Most Popular Book")
+
+        # book_canvas = FigureCanvasTkAgg(book_fig, scrollable_frame)
+        # book_canvas.get_tk_widget().pack()
+
+        # # Schedule of Library
+        # ttk.Label(scrollable_frame, text="Schedule of Library").pack(pady=10)
+        # schedule_fig = plt.Figure(figsize=(5, 3), dpi=100)
+        # schedule_ax = schedule_fig.add_subplot(111)
+        # schedule_ax.plot(
+        #     ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        #     [8, 10, 9, 11, 12],
+        #     marker="o",
+        #     linestyle="--",
+        #     color="purple",
+        # )
+        # schedule_ax.set_title("Library Schedule")
+        # schedule_ax.set_ylabel("Hours")
+        # schedule_ax.set_xlabel("Days")
+
+        # schedule_canvas = FigureCanvasTkAgg(schedule_fig, scrollable_frame)
+        # schedule_canvas.get_tk_widget().pack()    
+    
+    
+
 
 if __name__ == "__main__":
     app = LibraryApp()
