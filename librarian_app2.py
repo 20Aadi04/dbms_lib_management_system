@@ -281,10 +281,15 @@ class UserStatistics(tk.Frame):
         super().__init__(parent)
         self.controller = controller
         
-        ttk.Button(self, text="Show Graphs", command=self.update_graphs).pack(pady=10)
-        ttk.Button(self, text="Back", command=lambda: self.controller.show_frame(MainScreen)).pack(pady=10)
+        # Buttons
+        self.show_graphs_button = ttk.Button(self, text="Show Graphs", command=self.show_graphs)
+        self.show_graphs_button.pack(pady=10)
 
-        self.canvas = tk.Canvas(self, height = 600, width = 650)
+        self.back_button = ttk.Button(self, text="Back", command=self.hide_graphs_and_go_back)
+        self.back_button.pack(pady=10)
+
+        # Canvas and scrollable frame for graphs
+        self.canvas = tk.Canvas(self, height=600, width=650)
         self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
         self.scrollable_frame = ttk.Frame(self.canvas)
 
@@ -294,19 +299,38 @@ class UserStatistics(tk.Frame):
         )
 
         self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
-        self.canvas.configure(yscrollcommand= self.scrollbar.set)
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
         self.canvas.pack(side="left", fill="both", expand=True)
         self.scrollbar.pack(side="right", fill="y")
 
-    def update_graphs(self):
+        
+        self.graph_widgets = []
+
+    def show_graphs(self):
+        """Show all graphs on the scrollable frame."""
+        self.clear_graphs()
+
+        self.create_location_graph()
+        self.create_book_graph()
+
+    def hide_graphs_and_go_back(self):
+        self.clear_graphs()
+        self.controller.show_frame(MainScreen)
+
+    def clear_graphs(self):
+        for widget in self.graph_widgets:
+            widget.destroy()
+        self.graph_widgets.clear()
+
+    def create_location_graph(self):
         with self.controller.get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT location, COUNT(location) FROM seat GROUP BY location;")
                 location_stats = cur.fetchall()
                 location, location_count = zip(*location_stats)
 
-        fig = plt.Figure(figsize=(6,6))
+        fig = plt.Figure(figsize=(6, 6))
         ax = fig.add_subplot(111)
         ax.bar(location, location_count, color="skyblue")
         ax.set_title("Preferred Locations")
@@ -317,20 +341,24 @@ class UserStatistics(tk.Frame):
         fig.tight_layout()
 
         canvas_plot = FigureCanvasTkAgg(fig, self.scrollable_frame)
-        canvas_plot.get_tk_widget().pack(pady=10)
+        graph_widget = canvas_plot.get_tk_widget()
+        graph_widget.pack(pady=10)
 
+
+        self.graph_widgets.append(graph_widget)
+
+    def create_book_graph(self):
+        """Create and display the book graph."""
         with self.controller.get_db_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT b_name, COUNT(b_name),isbn FROM book GROUP BY isbn,b_name;")
+                cur.execute("SELECT b_name, COUNT(b_name), isbn FROM book GROUP BY isbn, b_name;")
                 book_stats = cur.fetchall()
-                book_name, book_count,isbn = zip(*book_stats)
+                book_name, book_count, isbn = zip(*book_stats)
 
-        book_name = list(book_name)
-        for i in range(len(book_name)):
-            if len(book_name[i]) > 20:
-                book_name[i] = book_name[i][:20] + "..."
 
-        fig = plt.Figure(figsize=(6,6))
+        book_name = [name[:20] + "..." if len(name) > 20 else name for name in book_name]
+
+        fig = plt.Figure(figsize=(6, 6))
         ax = fig.add_subplot(111)
         ax.bar(book_name, book_count, color="lime")
         ax.set_title("Preferred Books")
@@ -341,10 +369,11 @@ class UserStatistics(tk.Frame):
         fig.tight_layout()
 
         canvas_plot = FigureCanvasTkAgg(fig, self.scrollable_frame)
-        canvas_plot.get_tk_widget().pack(pady=10)
+        graph_widget = canvas_plot.get_tk_widget()
+        graph_widget.pack(pady=10)
+
+        self.graph_widgets.append(graph_widget)
  
-    
-    
 
 
 if __name__ == "__main__":
