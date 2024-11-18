@@ -340,76 +340,9 @@ class UserStatistics(tk.Frame):
         ax.set_xticklabels(book_name, rotation=90, ha="right")
         fig.tight_layout()
 
-        # plt.subplots_adjust(bottom=1)
-
-
         canvas_plot = FigureCanvasTkAgg(fig, self.scrollable_frame)
         canvas_plot.get_tk_widget().pack(pady=10)
-
-
-        
-        # # Create canvas and scrollbar
-        # canvas = tk.Canvas(self)
-        # scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
-        # scrollable_frame = ttk.Frame(canvas)
-
-        # # Configure canvas and scrollbar
-        # scrollable_frame.bind(
-        #     "<Configure>",
-        #     lambda e: canvas.configure(
-        #         scrollregion=canvas.bbox("all")  # Update scroll region dynamically
-        #     )
-        # )
-        # canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-        # canvas.configure(yscrollcommand=scrollbar.set)
-
-        # # Pack canvas and scrollbar to fill the window
-        # canvas.pack(side="left", fill="both", expand=True)
-        # scrollbar.pack(side="right", fill="y")
-
-        # # Most Preferred Location Graph
-        # ttk.Label(scrollable_frame, text="Most Preferred Location").pack(pady=10)
-        # location_fig = plt.Figure(figsize=(5, 3), dpi=100)
-        # location_ax = location_fig.add_subplot(111)
-        # location_ax.bar(["Location A", "Location B", "Location C"], [15, 30, 25], color="skyblue")
-        # location_ax.set_title("Most Preferred Location")
-        # location_ax.set_ylabel("Visits")
-
-        # location_canvas = FigureCanvasTkAgg(location_fig, scrollable_frame)
-        # location_canvas.get_tk_widget().pack()
-
-        # # Most Popular Book Graph
-        # ttk.Label(scrollable_frame, text="Most Popular Book").pack(pady=10)
-        # book_fig = plt.Figure(figsize=(5, 3), dpi=100)
-        # book_ax = book_fig.add_subplot(111)
-        # book_ax.pie(
-        #     [40, 35, 25],
-        #     labels=["Book A", "Book B", "Book C"],
-        #     autopct="%1.1f%%",
-        #     colors=["#ff9999", "#66b3ff", "#99ff99"],
-        # )
-        # book_ax.set_title("Most Popular Book")
-
-        # book_canvas = FigureCanvasTkAgg(book_fig, scrollable_frame)
-        # book_canvas.get_tk_widget().pack()
-
-        # # Schedule of Library
-        # ttk.Label(scrollable_frame, text="Schedule of Library").pack(pady=10)
-        # schedule_fig = plt.Figure(figsize=(5, 3), dpi=100)
-        # schedule_ax = schedule_fig.add_subplot(111)
-        # schedule_ax.plot(
-        #     ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-        #     [8, 10, 9, 11, 12],
-        #     marker="o",
-        #     linestyle="--",
-        #     color="purple",
-        # )
-        # schedule_ax.set_title("Library Schedule")
-        # schedule_ax.set_ylabel("Hours")
-        # schedule_ax.set_xlabel("Days")
-
-        # schedule_canvas = FigureCanvasTkAgg(schedule_fig, scrollable_frame)
-        # schedule_canvas.get_tk_widget().pack()    
+ 
     
     
 
