@@ -636,7 +636,7 @@ class BookingFinalizePage(tk.Frame):
 
 
 
-class BookingDetails2(tk.Frame):
+class BookingDetailsWithoutScroll(tk.Frame):
     def __init__(self, parent, seat_info, books):
         super().__init__(parent)
 
@@ -692,7 +692,7 @@ class BookingHistoryPage(tk.Frame):
         self.fetch_booking_details()
 
         # Create a canvas and a scrollbar
-        self.canvas = tk.Canvas(self,height=800,width=580)
+        self.canvas = tk.Canvas(self, height=700, width=580)
         self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
         
@@ -718,6 +718,10 @@ class BookingHistoryPage(tk.Frame):
 
         # Display booking details
         self.display_bookings()
+
+        # Back button (Make sure to pack it at the bottom of the scrollable frame)
+        back_button = ttk.Button(self, text="Back", command=self.go_back)
+        back_button.pack(pady=20, side="bottom")  # Ensure it is placed at the bottom
 
     def fetch_booking_details(self):
         student_id = self.controller.data.get("student_id")
@@ -776,7 +780,7 @@ class BookingHistoryPage(tk.Frame):
             books = details["books"]
 
             # Create the BookingDetails frame for each booking
-            booking_details_frame = BookingDetails2(self.scrollable_frame, seat_info={
+            booking_details_frame = BookingDetailsWithoutScroll(self.scrollable_frame, seat_info={
                 "seat_no": seat_no,
                 "seat_loc": location,
                 "start_time": start_time,
@@ -792,14 +796,9 @@ class BookingHistoryPage(tk.Frame):
             widget.destroy()
         self.display_bookings()
 
-
-
-
-
-
-
-
-
+    def go_back(self):
+        """Navigate back to the home page."""
+        self.controller.show_frame(HomePage)
 
 
 
@@ -812,7 +811,8 @@ class HomePage(tk.Frame):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
-
+        
+        self.nocur =None
         # Title
         bold_font = Font(weight="bold", size=14)
         ttk.Label(self, text="Welcome to Booking System", font=bold_font).pack(pady=20)
@@ -830,14 +830,18 @@ class HomePage(tk.Frame):
 
         ttk.Button(self.button_frame, text="View Booking History", command=self.show_booking_history).grid(row=0, column=0, padx=10, pady=10)
         ttk.Button(self.button_frame, text="Create New Booking", command=self.create_new_booking).grid(row=0, column=1, padx=10, pady=10)
-
+        
+        # Add Logout Button
+        ttk.Button(self.button_frame, text="Logout", command=self.logout).grid(row=1, column=0, columnspan=2, pady=10)
+        
     def refresh(self):
         """Updates the current booking display dynamically."""
         current_booking = self.controller.data.get("current_booking", None)
-
+       
         if self.booking_details:
             self.booking_details.destroy()  # Remove the previous BookingDetails frame
-
+        if self.nocur:
+            self.nocur.destroy()
         if current_booking:
             seat_info = current_booking.get("seat_info", {})
             seat_info_formatted = {
@@ -860,6 +864,8 @@ class HomePage(tk.Frame):
             # Instantiate and pack BookingDetails
             self.booking_details = BookingDetails(self.current_booking_frame, seat_info_formatted, books_formatted)
             self.booking_details.pack(side="top", fill="x", padx=10, pady=10)
+        else:
+            self.nocur = ttk.Label(self.current_booking_frame, text="No current booking available.", font=("Helvetica", 12)).pack(pady=10)
 
     def show_booking_history(self):
         """Navigates to the booking history page."""
@@ -869,7 +875,13 @@ class HomePage(tk.Frame):
         """Navigates to the new booking page."""
         self.controller.show_frame(BookingTimeSlotPage)
 
-
+    def logout(self):
+        """Handles logout by clearing session data and returning to the login page."""
+        # Clear any session or user data
+        self.controller.data.clear()  # Assuming session data is stored in `controller.data`
+        
+        # Navigate to the login page
+        self.controller.show_frame(LoginPage)  # Replace with your actual login frame
 
 class windows(tk.Tk):
     data = {'stime':"",'etime':"",'cur_seat_info':{'location' : "" ,'seat_no' : None,'seat_id' :None },'Book_logs':[]}
@@ -907,11 +919,42 @@ class windows(tk.Tk):
             # the windows class acts as the root window for the frames.
             self.frames[F] = frame
             # frame.grid(row=0, column=0)
-
-   
-
-        # Using a method to switch frames
+                # Using a method to switch frames
+        self.create_menu_bar()
         self.show_frame(LoginPage)
+
+    def create_menu_bar(self):
+        """Creates a menu bar with Back and Logout options."""
+        menubar = tk.Menu(self)
+
+        # Add a menu with Back and Logout
+
+        menubar.add_command(label="Back", command=self.go_back)
+        # Back option
+
+        
+        # Logout option
+        menubar.add_command(label="Logout", command=self.logout)
+        
+        # Configuring the menu
+        self.config(menu=menubar)
+   
+    def go_back(self):
+        """Navigate to the previous page."""
+        # Logic to go back to the previous page can be added here
+        # For now, we go to HomePage
+        self.show_frame(HomePage)
+    
+    def logout(self):
+        """Logout the user and navigate to the LoginPage."""
+        response = messagebox.askyesno("Logout", "Are you sure you want to logout?")
+        if response:
+            # Clear user data
+            self.data = {'stime': "", 'etime': "", 'cur_seat_info': {'location': "", 'seat_no': None, 'seat_id': None}, 'Book_logs': []}
+            
+            # Show the login page
+            self.show_frame(LoginPage)
+
     def show_frame(self, cont):
         frame = self.frames[cont]
         # raises the current frame to the top
