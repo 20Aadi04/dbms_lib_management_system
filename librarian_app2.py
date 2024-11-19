@@ -129,6 +129,7 @@ class Register(tk.Frame):
         self.password_entry_reg.pack(fill="x", pady=5)
 
         ttk.Button(self, text="Submit", command=self.submit_registration).pack(pady=20)
+        ttk.Button(self, text="Back", command=lambda: self.controller.show_frame(Login)).pack(pady=20)
     
     def submit_registration(self):
         first_name = self.first_name_entry.get()
@@ -188,6 +189,8 @@ class MainScreen(tk.Frame):
 
         btn_user_statistics =  ttk.Button(self, text="User Statistics", command=lambda: controller.show_frame(UserStatistics))
         btn_user_statistics.pack(pady=5)
+
+        ttk.Button(self, text="Back", command=lambda: self.controller.show_frame(Login)).pack(pady=20)
 
 
 # Frame for adding a new book
