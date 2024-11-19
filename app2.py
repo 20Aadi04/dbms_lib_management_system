@@ -861,7 +861,7 @@ class HomePage(tk.Frame):
         ttk.Button(self.button_frame, text="View Booking History", command=self.view_booking_history).grid(row=0, column=0, padx=10, pady=10)
         ttk.Button(self.button_frame, text="Create New Booking", command=self.create_new_booking).grid(row=0, column=1, padx=10, pady=10)
         ttk.Button(self.button_frame, text="Logout", command=self.logout).grid(row=0, column=2, padx=10, pady=10)
-
+        ttk.Button(self.button_frame, text="refresh", command=self.refresh).grid(row=0, column=3, padx=10, pady=10)
         self.flag = 0    
 
     def refresh(self):

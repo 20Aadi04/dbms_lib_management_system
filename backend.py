@@ -216,10 +216,10 @@ def create_booking():
             for book_id in books:
                 cur.execute(
                     """
-                    INSERT INTO bookingbook_id (student_id, start_time, book_id)
-                    VALUES (%s, %s, %s)
+                    INSERT INTO bookingbook_id (student_id, start_time, end_time,book_id)
+                    VALUES (%s, %s,%s, %s)
                     """,
-                    (student_id, start_time, book_id)
+                    (student_id, start_time,end_time, book_id)
                 )
 
             conn.commit()

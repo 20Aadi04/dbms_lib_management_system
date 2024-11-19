@@ -28,9 +28,11 @@ CREATE TABLE IF NOT EXISTS Librarian (
     LName VARCHAR(255) NOT NULL,
     DOB DATE NOT NULL,
     Shift VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    password VARCHAR(255),
-    CONSTRAINT c1 CHECK (Shift in ('MORNING','EVENING'))
+    email VARCHAR(255) NOT NULL UNIQUE CHECK (
+        email ~ '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    ),
+    password VARCHAR(255) not null,
+    CONSTRAINT c1 CHECK (Shift in ('MORNING', 'EVENING'))
 );
 CREATE TABLE IF NOT EXISTS Seat (
     Seat_ID SERIAL PRIMARY KEY,
@@ -42,7 +44,6 @@ CREATE TABLE IF NOT EXISTS Booking (
     Seat_ID INT,
     Start_Time TIMESTAMP NOT NULL,
     End_Time TIMESTAMP NOT NULL,
-    /* Book_ids SERIAL [], */
     PRIMARY KEY(Student_ID, Start_Time),
     FOREIGN KEY (Student_ID) REFERENCES Student(Student_ID) ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (Seat_ID) REFERENCES Seat(Seat_ID) ON UPDATE CASCADE ON DELETE CASCADE
@@ -50,6 +51,7 @@ CREATE TABLE IF NOT EXISTS Booking (
 CREATE TABLE IF NOT EXISTS BookingBook_ID(
     Student_ID INT,
     Start_Time TIMESTAMP NOT NULL,
+    End_Time TIMESTAMP NOT NULL,
     Book_id INT,
     FOREIGN KEY (Student_ID, Start_Time) REFERENCES Booking(Student_ID, Start_Time) ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (Book_id) REFERENCES Book(b_id) ON UPDATE CASCADE ON DELETE CASCADE
