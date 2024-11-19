@@ -385,9 +385,11 @@ class UserStatistics(tk.Frame):
         """Create and display the book graph."""
         with self.controller.get_db_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("""SELECT b.b_name,count(b.isbn),b.isbn from book b, bookingbook_id a
+                cur.execute("""
+                            SELECT b.b_name,count(b.isbn),b.isbn from book b, bookingbook_id a
                             WHERE b.b_id = a.book_id 
-                            GROUP BY b.isbn,b.b_name""")
+                            GROUP BY b.isbn,b.b_name
+                            """)
                 book_stats = cur.fetchall()
                 book_name, book_count, isbn = zip(*book_stats)
 
@@ -416,9 +418,11 @@ class UserStatistics(tk.Frame):
         """Create and display the book graph."""
         with self.controller.get_db_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("""SELECT TO_CHAR(start_time, 'Day') weekday, count(*) from booking
+                cur.execute("""
+                            SELECT TO_CHAR(start_time, 'Day') weekday, count(*) from booking
                             GROUP BY weekday
-                            ORDER BY TO_CHAR(start_time, 'Day')""")
+                            ORDER BY TO_CHAR(start_time, 'Day')
+                            """)
                 weekly_rush = cur.fetchall()
                 week, week_count = zip(*weekly_rush)
 
@@ -444,9 +448,11 @@ class UserStatistics(tk.Frame):
         """Create and display the book graph."""
         with self.controller.get_db_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("""select extract(hour from start_time)as hour,count(*) from booking 
+                cur.execute("""
+                            select extract(hour from start_time)as hour,count(*) from booking 
                             group by hour
-                            order by extract(hour from start_time);""")
+                            order by extract(hour from start_time);
+                            """)
                 hourly_rush = cur.fetchall()
                 hour, hour_count = zip(*hourly_rush)
 
