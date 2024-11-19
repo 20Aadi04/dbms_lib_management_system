@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import psycopg2
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.ticker import MaxNLocator
 import matplotlib.pyplot as plt
 from psycopg2 import sql
 from dotenv import load_dotenv
@@ -314,6 +315,7 @@ class UserStatistics(tk.Frame):
         self.create_location_graph()
         self.create_book_graph()
         self.create_weekly_rush()
+        self.create_hourly_rush()
 
     def hide_graphs_and_go_back(self):
         self.clear_graphs()
@@ -361,12 +363,42 @@ class UserStatistics(tk.Frame):
 
         fig = plt.Figure(figsize=(6, 6))
         ax = fig.add_subplot(111)
-        ax.bar(book_name, book_count, color="lime")
+        bars = ax.bar(book_name, book_count, color="lime")
         ax.set_title("Preferred Books")
         ax.set_xlabel("Book Names")
         ax.set_ylabel("Count")
         ax.set_xticks(book_name)
         ax.set_xticklabels(book_name, rotation=90, ha="right")
+        ax.bar_label(bars, fmt='%d')
+        fig.tight_layout()
+
+        canvas_plot = FigureCanvasTkAgg(fig, self.scrollable_frame)
+        graph_widget = canvas_plot.get_tk_widget()
+        graph_widget.pack(pady=10)
+        ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+        self.graph_widgets.append(graph_widget)
+
+    def create_weekly_rush(self):
+        """Create and display the book graph."""
+        with self.controller.get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""SELECT TO_CHAR(start_time, 'Day') weekday, count(*) from booking
+                            GROUP BY weekday
+                            ORDER BY TO_CHAR(start_time, 'Day')""")
+                weekly_rush = cur.fetchall()
+                week, week_count = zip(*weekly_rush)
+
+        fig = plt.Figure(figsize=(6, 6))
+        ax = fig.add_subplot(111)
+        bars = ax.bar(week, week_count, color="violet")
+        ax.set_title("Weekly Rush")
+        ax.set_xlabel("Days")
+        ax.set_ylabel("Count")
+        ax.set_xticks(week)
+        ax.set_xticklabels(week, rotation=90, ha="right")
+        ax.bar_label(bars, fmt='%d')
+        ax.yaxis.set_major_locator(MaxNLocator(integer=True))
         fig.tight_layout()
 
         canvas_plot = FigureCanvasTkAgg(fig, self.scrollable_frame)
@@ -375,27 +407,26 @@ class UserStatistics(tk.Frame):
 
         self.graph_widgets.append(graph_widget)
 
-    def create_weekly_rush(self):
+    def create_hourly_rush(self):
         """Create and display the book graph."""
         with self.controller.get_db_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("""SELECT b.b_name,count(b.isbn),b.isbn from book b, bookingbook_id a
-                            WHERE b.b_id = a.book_id 
-                            GROUP BY b.isbn,b.b_name""")
-                book_stats = cur.fetchall()
-                book_name, book_count, isbn = zip(*book_stats)
-
-
-        book_name = [name[:20] + "..." if len(name) > 20 else name for name in book_name]
+                cur.execute("""select extract(hour from start_time)as hour,count(*) from booking 
+                            group by hour
+                            order by extract(hour from start_time);""")
+                hourly_rush = cur.fetchall()
+                hour, hour_count = zip(*hourly_rush)
 
         fig = plt.Figure(figsize=(6, 6))
         ax = fig.add_subplot(111)
-        ax.bar(book_name, book_count, color="lime")
-        ax.set_title("Preferred Books")
-        ax.set_xlabel("Book Names")
+        bars = ax.bar(hour, hour_count, color="cyan")
+        ax.set_title("Hourly Rush")
+        ax.set_xlabel("Hour")
         ax.set_ylabel("Count")
-        ax.set_xticks(book_name)
-        ax.set_xticklabels(book_name, rotation=90, ha="right")
+        ax.set_xticks(hour)
+        ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+        ax.bar_label(bars, fmt='%d')
+        ax.set_xticklabels(hour, rotation=90, ha="right")
         fig.tight_layout()
 
         canvas_plot = FigureCanvasTkAgg(fig, self.scrollable_frame)
