@@ -23,14 +23,14 @@ class LibraryApp(tk.Tk):
         database_url = os.getenv('DATABASE_URL')
         self.conn = psycopg2.connect(database_url)
         self.frames = {}
-        for F in (MainScreen, AddBook, RemoveBook, AddSeat, RemoveSeat, UserStatistics):
+        for F in (Login,MainScreen, AddBook, RemoveBook, AddSeat, RemoveSeat, UserStatistics):
             frame = F(container, self)
             self.frames[F] = frame
             
 
             
 
-        self.show_frame(MainScreen)
+        self.show_frame(Login)
 
     def show_frame(self, cont):
         self.hide_all()
@@ -41,6 +41,39 @@ class LibraryApp(tk.Tk):
     def get_db_connection(self):
      
         return self.conn
+
+class Login(tk.Frame):
+    def __init__(self, parent, controller):
+        super().__init__(parent)
+        self.controller = controller
+
+        ttk.Label(self, text="Login Screen", font=("Helvetica", 18)).grid(row=0, column=0, columnspan=2, pady=20)
+        ttk.Label(self, text="ID").grid(row=1, column=0, padx=10, pady=10, sticky="e")
+        self.id_entry = ttk.Entry(self)
+        self.id_entry.grid(row=1, column=1, padx=10, pady=10)
+
+        ttk.Label(self, text="Password").grid(row=2, column=0, padx=10, pady=10, sticky="e")
+        self.password_entry = ttk.Entry(self, show="*")
+        self.password_entry.grid(row=2, column=1, padx=10, pady=10)
+
+        self.message_label = ttk.Label(self, text="", foreground="red")
+        self.message_label.grid(row=4, column=0, columnspan=2, pady=10)
+
+        ttk.Button(self, text="Login", command=self.validate).grid(row=3, column=0, columnspan=2, pady=20)
+
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
+
+    def validate(self):
+        #  with self.controller.get_db_connection() as conn:
+        #     with conn.cursor() as cur:
+        #         cur.execute(f"Select password from librarian where librarian_id = {self.password_entry()};")
+        #         password = cur.fetchone()[0]
+
+        if self.id_entry.get() and self.password_entry.get():
+            self.controller.show_frame(MainScreen)
+        else:
+            self.message_label.config(text="Please enter details properly")
 
 # Main menu screen
 class MainScreen(tk.Frame):
