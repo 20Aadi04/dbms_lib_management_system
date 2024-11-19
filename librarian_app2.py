@@ -326,18 +326,16 @@ class UserStatistics(tk.Frame):
     def create_location_graph(self):
         with self.controller.get_db_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT location, COUNT(location) FROM seat GROUP BY location;")
+                cur.execute("""SELECT location, COUNT(location) FROM seat
+                            WHERE seat_id in (select seat_id from booking)
+                            GROUP BY location;""")
                 location_stats = cur.fetchall()
                 location, location_count = zip(*location_stats)
 
         fig = plt.Figure(figsize=(6, 6))
         ax = fig.add_subplot(111)
-        ax.bar(location, location_count, color="skyblue")
+        ax.pie(location_count, labels=location,autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
         ax.set_title("Preferred Locations")
-        ax.set_xlabel("Location")
-        ax.set_ylabel("Count")
-        ax.set_xticks(location)
-        ax.set_xticklabels(location, rotation=90, ha="right")
         fig.tight_layout()
 
         canvas_plot = FigureCanvasTkAgg(fig, self.scrollable_frame)
@@ -351,7 +349,9 @@ class UserStatistics(tk.Frame):
         """Create and display the book graph."""
         with self.controller.get_db_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT b_name, COUNT(b_name), isbn FROM book GROUP BY isbn, b_name;")
+                cur.execute("""SELECT b.b_name,count(b.isbn),b.isbn from book b, bookingbook_id a
+                            WHERE b.b_id = a.book_id 
+                            GROUP BY b.isbn,b.b_name""")
                 book_stats = cur.fetchall()
                 book_name, book_count, isbn = zip(*book_stats)
 
