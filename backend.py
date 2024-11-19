@@ -45,31 +45,42 @@ def login():
 
 @app.route('/register', methods=['POST'])
 def register():
-    """Register a new student."""
+    """Handle student registration."""
     data = request.json
-    required_fields = ['student_id', 'fname', 'lname', 'dob', 'grad_type', 'email', 'phone_num']
 
-    # Validate required fields
-    for field in required_fields:
-        if not data.get(field):
-            return jsonify({'error': f'{field} is required'}), 400
+    required_fields = ["student_id", "fname", "lname", "dob", "grad_type", "email", "phone_num", "password"]
+    if not all(field in data for field in required_fields):
+        return jsonify({"success": False, "error": "Missing required fields"}), 400
 
     try:
         conn = get_db_connection()
         with conn.cursor() as cur:
+            # Insert the new student into the database
             cur.execute(
                 """
                 INSERT INTO student (student_id, fname, lname, dob, grad_type, email, phone_num)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """,
-                (data['student_id'], data['fname'], data['lname'], data['dob'], data['grad_type'], data['email'], data['phone_num'])
+                (
+                    data["student_id"],
+                    data["fname"],
+                    data["lname"],
+                    data["dob"],
+                    data["grad_type"],
+                    data["email"],
+                    data["phone_num"]
+                    # data["password"]
+                )
             )
-            conn.commit()
-        return jsonify({'success': True, 'message': 'Registration successful'})
+        conn.commit()
+        return jsonify({"success": True, "message": "Registration successful"})
+    except psycopg2.IntegrityError as e:
+        return jsonify({"success": False, "error": "Student ID or Email already exists."}), 400
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         conn.close()
+
 # complex 1
 @app.route('/available-seats', methods=['GET'])
 def available_seats():
@@ -185,7 +196,7 @@ def create_booking():
     start_time = data.get('start_time')
     end_time = data.get('end_time')
     books = data.get('books', [])
-
+    print(books)
     if not all([student_id, seat_id, start_time, end_time]):
         return jsonify({'error': 'Missing required booking data'}), 400
 
@@ -237,8 +248,8 @@ def booking_history():
                     bo.b_name , bo.isbn, bo.authors, bo.pub AS publisher
                 FROM booking b
                 JOIN seat s ON b.seat_id = s.seat_id
-                JOIN bookingbook_id bb ON b.student_id = bb.student_id AND b.start_time = bb.start_time
-                JOIN book bo ON bb.book_id = bo.b_id
+                LEFT JOIN bookingbook_id bb ON b.student_id = bb.student_id AND b.start_time = bb.start_time
+                LEFT JOIN book bo ON bb.book_id = bo.b_id
                 WHERE b.student_id = %s
                 ORDER BY b.start_time DESC;
                 """,
@@ -266,16 +277,22 @@ def current_booking():
             # Fetch the most recent active booking
             cur.execute(
                 """
-                SELECT 
-                    s.seat_no, s.location, b.start_time, b.end_time,
-                    bo.b_name, bo.isbn, bo.authors, bo.pub AS publisher
+                SELECT s.seat_no,s.location,b.start_time,b.end_time,bo.b_name,
+                    bo.isbn,bo.authors,bo.pub AS publisher
                 FROM booking b
-                JOIN seat s ON b.seat_id = s.seat_id
-                JOIN bookingbook_id bb ON b.student_id = bb.student_id AND b.start_time = bb.start_time
-                JOIN book bo ON bb.book_id = bo.b_id
-                WHERE b.student_id = %s AND b.end_time > NOW()
-                ORDER BY b.start_time 
-                LIMIT 1;
+                    JOIN seat s ON b.seat_id = s.seat_id
+                    LEFT JOIN bookingbook_id bb ON b.student_id = bb.student_id
+                    AND b.start_time = bb.start_time
+                    LEFT JOIN book bo ON bb.book_id = bo.b_id
+                WHERE (b.student_id, b.start_time) in (
+                        Select student_id,
+                            start_time
+                        from booking
+                        where student_id = %s
+                        ORDER by start_time
+                        limit 1
+                    )
+                    AND b.end_time > NOW();
                 """,
                 (student_id,)
             )

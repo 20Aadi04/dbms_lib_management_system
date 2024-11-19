@@ -133,66 +133,92 @@ class LoginPage(tk.Frame):
 
 class RegistrationPage(tk.Frame):
     def __init__(self, parent, controller):
-        super().__init__(parent)
+        tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        # Title
-        ttk.Label(self, text="Register", font=("Helvetica", 16, "bold")).pack(pady=20)
+        ttk.Label(self, text="First Name: ").grid(row=0, column=0, pady=10, padx=10)
+        self.first_name_entry = ttk.Entry(self)
+        self.first_name_entry.grid(row=0, column=1, pady=10, padx=10)
 
-        # Input fields
-        self.entries = {}
-        fields = [
-            ("Student ID", "student_id"),
-            ("First Name", "fname"),
-            ("Last Name", "lname"),
-            ("Date of Birth (YYYY-MM-DD)", "dob"),
-            ("Graduate Type (FIRST DEGREE/HIGHER DEGREE)", "grad_type"),
-            ("Email", "email"),
-            ("Phone Number", "phone_num"),
-        ]
-        for label, key in fields:
-            ttk.Label(self, text=label).pack(pady=5)
-            entry = ttk.Entry(self)
-            entry.pack(pady=5)
-            self.entries[key] = entry
+        ttk.Label(self, text="Last Name: ").grid(row=1, column=0, pady=10, padx=10)
+        self.last_name_entry = ttk.Entry(self)
+        self.last_name_entry.grid(row=1, column=1, pady=10, padx=10)
 
-        # Register Button
-        register_button = ttk.Button(self, text="Register", command=self.register)
-        register_button.pack(pady=20)
+        ttk.Label(self, text="Student ID: ").grid(row=2, column=0, pady=10, padx=10)
+        self.student_id_entry_reg = ttk.Entry(self)
+        self.student_id_entry_reg.grid(row=2, column=1, pady=10, padx=10)
 
-        # Error message
-        self.error_label = ttk.Label(self, text="", foreground="red")
-        self.error_label.pack()
+        ttk.Label(self, text="Email: ").grid(row=3, column=0, pady=10, padx=10)
+        self.email_entry = ttk.Entry(self)
+        self.email_entry.grid(row=3, column=1, pady=10, padx=10)
 
-        # Back to Login Button
-        back_button = ttk.Button(self, text="Back to Login", command=lambda: controller.show_frame(LoginPage))
-        back_button.pack(pady=10)
+        ttk.Label(self, text="Phone Number: ").grid(row=4, column=0, pady=10, padx=10)
+        self.phone_number_entry = ttk.Entry(self)
+        self.phone_number_entry.grid(row=4, column=1, pady=10, padx=10)
 
-    def register(self):
-        """Attempt to register a new student."""
-        # Collect input data
-        data = {key: entry.get() for key, entry in self.entries.items()}
+        ttk.Label(self, text="Graduation Type: ").grid(row=5, column=0, pady=10, padx=10)
+        self.grad_type_var = tk.StringVar()
+        self.grad_type_combobox = ttk.Combobox(self, textvariable=self.grad_type_var)
+        self.grad_type_combobox['values'] = ('FIRST DEGREE', 'SECOND DEGREE')
+        self.grad_type_combobox.current(0)
+        self.grad_type_combobox.grid(row=5, column=1, pady=10, padx=10)
 
-        # Validate input
-        for key, value in data.items():
-            if not value:
-                self.error_label.config(text=f"{key.replace('_', ' ').capitalize()} is required.")
-                return
+        ttk.Label(self, text="Date of Birth: ").grid(row=6, column=0, pady=10, padx=10)
+        self.dob_entry = DateEntry(self, date_pattern="yyyy-mm-dd")
+        self.dob_entry.grid(row=6, column=1, pady=10, padx=10)
 
-        # API request to register
-        response = self.controller.request_api(endpoint="/register", method="POST", data=data)
+        ttk.Label(self, text="Create a Password: ").grid(row=7, column=0, pady=10, padx=10)
+        self.password_entry_reg = ttk.Entry(self, show="*")
+        self.password_entry_reg.grid(row=7, column=1, pady=10, padx=10)
 
-        if response and response.get("success"):
-            messagebox.showinfo("Success", "Registration successful! Please log in.")
-            self.controller.show_frame(LoginPage)  # Navigate to LoginPage
+        ttk.Button(self, text="Submit", command=self.submit_registration).grid(row=8, column=1, pady=20)
+
+    def submit_registration(self):
+        """Submit the registration form to the backend."""
+        first_name = self.first_name_entry.get()
+        last_name = self.last_name_entry.get()
+        student_id = self.student_id_entry_reg.get()
+        email = self.email_entry.get()
+        phone_number = self.phone_number_entry.get()
+        grad_type = self.grad_type_var.get()
+        dob = self.dob_entry.get()
+        password = self.password_entry_reg.get()
+
+        if first_name and last_name and student_id and email and phone_number and grad_type and dob and password:
+            # Prepare payload for API
+            payload = {
+                "student_id": student_id,
+                "fname": first_name,
+                "lname": last_name,
+                "dob": dob,
+                "grad_type": grad_type,
+                "email": email,
+                "phone_num": phone_number,
+                "password": password
+            }
+
+            # Call the backend API
+            response = self.controller.request_api(endpoint="/register", method="POST", data=payload)
+
+            if response and response.get("success"):
+                messagebox.showinfo("Registration", "Registration Successful")
+                self.controller.show_frame(LoginPage)
+            else:
+                messagebox.showerror("Error", response.get("error", "Registration failed. Please try again."))
         else:
-            self.error_label.config(text=response["error"] if response else "Registration failed.")
+            messagebox.showerror("Error", "Please fill out all fields correctly.")
 
     def refresh(self):
-        """Clear all input fields and error messages."""
-        for entry in self.entries.values():
-            entry.delete(0, tk.END)
-        self.error_label.config(text="")
+        """Reset all input fields when the page is refreshed."""
+        self.first_name_entry.delete(0, tk.END)
+        self.last_name_entry.delete(0, tk.END)
+        self.student_id_entry_reg.delete(0, tk.END)
+        self.email_entry.delete(0, tk.END)
+        self.phone_number_entry.delete(0, tk.END)
+        self.grad_type_combobox.current(0)
+        self.dob_entry.set_date("2004-01-01")
+        self.password_entry_reg.delete(0, tk.END)
+
 
 class BookingTimeSlotPage(tk.Frame):
     max_time_span = 4 * 60  # minutes
@@ -232,7 +258,7 @@ class BookingTimeSlotPage(tk.Frame):
         self.update_time_labels()
 
         # Table for displaying seat data
-        self.canvas = tk.Canvas(self)
+        self.canvas = tk.Canvas(self, height = 600)
         self.scrollbar_y = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.scrollbar_y.set)
 
@@ -571,7 +597,7 @@ class BookingFinalizePage(tk.Frame):
             "seat_id": booking_data.get("cur_seat_info", {}).get("seat_id"),
             "start_time": booking_data.get("stime"),
             "end_time": booking_data.get("etime"),
-            "books": [book["b_id"] for book in booking_data.get("Book_logs", [])]
+            "books": [book["b_id"] for book in booking_data.get("selected_books", [])]
         }
 
         response = self.controller.request_api(endpoint="/create-booking", method="POST", data=payload)
@@ -710,7 +736,7 @@ class BookingDetails(tk.Frame):
         super().__init__(parent)
 
         # Create canvas and scrollbar
-        canvas = tk.Canvas(self, width=530,height= 600)  # Set canvas width to make the frame wider
+        canvas = tk.Canvas(self)  # Set canvas width to make the frame wider
         scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
         scrollable_frame = ttk.Frame(canvas)
 
@@ -790,7 +816,8 @@ class BookingDetailsWithoutScroll(tk.Frame):
         ttk.Label(seat_frame, text=f"{seat_info['end_time']}", padding=(5, 5)).grid(row=3, column=1, sticky="w", padx=10)
 
         # Book details
-        ttk.Label(self.scrollable_frame, text="Book Details", padding=10, font=bold_font).pack(side="top", anchor="w")
+        if books:
+            ttk.Label(self.scrollable_frame, text="Book Details", padding=10, font=bold_font).pack(side="top", anchor="w")
         for book in books:
             book_frame = ttk.Frame(self.scrollable_frame, padding=10, borderwidth=2, relief="solid")
             book_frame.pack(side="top", fill="x", pady=5)
@@ -835,6 +862,8 @@ class HomePage(tk.Frame):
         ttk.Button(self.button_frame, text="Create New Booking", command=self.create_new_booking).grid(row=0, column=1, padx=10, pady=10)
         ttk.Button(self.button_frame, text="Logout", command=self.logout).grid(row=0, column=2, padx=10, pady=10)
 
+        self.flag = 0    
+
     def refresh(self):
         """Refreshes the HomePage to display the current booking."""
         self.fetch_current_booking()
@@ -847,10 +876,11 @@ class HomePage(tk.Frame):
             method="GET",
             params={"student_id": student_id}
         )
-
+        self.s = None
         if self.booking_details:
             self.booking_details.destroy()
-
+        if self.s: 
+            self.s.destroy()
         if response and response.get("success"):
             booking = response.get("current_booking")
             if booking:
@@ -870,10 +900,13 @@ class HomePage(tk.Frame):
                     }
                     for book in booking["books"]
                 ]
-                self.booking_details = BookingDetailsWithoutScroll(self.current_booking_frame, seat_info, books)
+                self.booking_details = BookingDetails(self.current_booking_frame, seat_info, books)
                 self.booking_details.pack(side="top", fill="x", padx=10, pady=10)
             else:
-                ttk.Label(self.current_booking_frame, text="No current booking available.", font=("Helvetica", 12)).pack(pady=10)
+                if self.flag == 0:
+                    self.s = ttk.Label(self.current_booking_frame, text="No current booking available.", font=("Helvetica", 12))
+                    self.s.pack()
+                    self.flag = 1
         else:
             messagebox.showerror("Error", response.get("error", "Failed to fetch current booking."))
 
