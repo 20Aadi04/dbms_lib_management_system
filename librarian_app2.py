@@ -65,13 +65,20 @@ class Login(tk.Frame):
         self.columnconfigure(1, weight=1)
 
     def validate(self):
-        #  with self.controller.get_db_connection() as conn:
-        #     with conn.cursor() as cur:
-        #         cur.execute(f"Select password from librarian where librarian_id = {self.password_entry()};")
-        #         password = cur.fetchone()[0]
-
-        if self.id_entry.get() and self.password_entry.get():
-            self.controller.show_frame(MainScreen)
+        with self.controller.get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(f"Select password from librarian where librarian_id = {self.id_entry.get()};")
+                password = cur.fetchone()
+        if password:
+            password = password[0]
+            if self.id_entry.get() :
+                if self.password_entry.get() == password:
+                    self.controller.show_frame(MainScreen)
+                else:
+                    messagebox.showerror("password","password does not match")
+                    # self.password_entry.
+            else:
+                self.message_label.config(text="Please enter details properly")
         else:
             self.message_label.config(text="Please enter details properly")
 
