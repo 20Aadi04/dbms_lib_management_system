@@ -92,6 +92,10 @@ class LoginPage(tk.Frame):
         login_button = ttk.Button(self, text="Login", command=self.login)
         login_button.pack(pady=20)
 
+        # re
+        login_button = ttk.Button(self, text="Registartion", command=lambda :self.controller.show_frame(RegistrationPage) )
+        login_button.pack(pady=20)
+
         # Error message
         self.error_label = ttk.Label(self, text="", foreground="red")
         self.error_label.pack()
