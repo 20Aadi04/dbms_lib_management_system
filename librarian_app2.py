@@ -5,6 +5,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.ticker import MaxNLocator
 import matplotlib.pyplot as plt
 from psycopg2 import sql
+from tkcalendar import DateEntry
 from dotenv import load_dotenv
 import os
 
@@ -23,12 +24,9 @@ class LibraryApp(tk.Tk):
         database_url = os.getenv('DATABASE_URL')
         self.conn = psycopg2.connect(database_url)
         self.frames = {}
-        for F in (Login,MainScreen, AddBook, RemoveBook, AddSeat, RemoveSeat, UserStatistics):
+        for F in (Login,Register,MainScreen, AddBook, RemoveBook, AddSeat, RemoveSeat, UserStatistics):
             frame = F(container, self)
-            self.frames[F] = frame
-            
-
-            
+            self.frames[F] = frame      
 
         self.show_frame(Login)
 
@@ -59,12 +57,24 @@ class Login(tk.Frame):
         self.message_label = ttk.Label(self, text="", foreground="red")
         self.message_label.grid(row=4, column=0, columnspan=2, pady=10)
 
-        ttk.Button(self, text="Login", command=self.validate).grid(row=3, column=0, columnspan=2, pady=20)
+        ttk.Button(self, text="Login", command=self.validate).grid(row=3, column=0, columnspan=2, pady=20, padx = 10)
+        ttk.Button(self, text="Register", command=lambda: self.controller.show_frame(Register)).grid(row=5, column=0, columnspan=2, pady=20, padx = 10)
 
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
 
     def validate(self):
+
+        try:
+            type(int(self.id_entry.get())) == int
+        except:
+            messagebox.showerror("Error","ID Must be an Integer")
+            return
+
+        if self.id_entry.get() == "":
+            messagebox.showerror("Error","Enter ID")
+            return
+
         with self.controller.get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(f"Select password from librarian where librarian_id = {self.id_entry.get()};")
@@ -81,6 +91,75 @@ class Login(tk.Frame):
                 self.message_label.config(text="Please enter details properly")
         else:
             self.message_label.config(text="Please enter details properly")
+
+class Register(tk.Frame):
+    def __init__(self,parent,controller):
+        super().__init__(parent)
+        self.controller = controller
+
+        ttk.Label(self, text="First Name: ").pack(anchor="w", pady=5)
+        self.first_name_entry = ttk.Entry(self)
+        self.first_name_entry.pack(fill="x", pady=5)
+
+        ttk.Label(self, text="Last Name: ").pack(anchor="w", pady=5)
+        self.last_name_entry = ttk.Entry(self)
+        self.last_name_entry.pack(fill="x", pady=5)
+
+        ttk.Label(self, text="Librarian ID: ").pack(anchor="w", pady=5)
+        self.librarian_id_entry = ttk.Entry(self)
+        self.librarian_id_entry.pack(fill="x", pady=5)
+
+        ttk.Label(self, text="Email: ").pack(anchor="w", pady=5)
+        self.email_entry = ttk.Entry(self)
+        self.email_entry.pack(fill="x", pady=5)
+
+        ttk.Label(self, text="Shift: ").pack(anchor="w", pady=5)
+        self.shift_var = tk.StringVar()
+        self.shift_combobox = ttk.Combobox(self, textvariable=self.shift_var)
+        self.shift_combobox['values'] = ('MORNING', 'EVENING')
+        self.shift_combobox.current(0)
+        self.shift_combobox.pack(fill="x", pady=5)
+
+        ttk.Label(self, text="Date of Birth: ").pack(anchor="w", pady=5)
+        self.dob_entry = DateEntry(self, date_pattern="yyyy-mm-dd")
+        self.dob_entry.pack(fill="x", pady=5)
+
+        ttk.Label(self, text="Create a Password: ").pack(anchor="w", pady=5)
+        self.password_entry_reg = ttk.Entry(self, show="*")
+        self.password_entry_reg.pack(fill="x", pady=5)
+
+        ttk.Button(self, text="Submit", command=self.submit_registration).pack(pady=20)
+    
+    def submit_registration(self):
+        first_name = self.first_name_entry.get()
+        last_name = self.last_name_entry.get()
+        librarian_id = self.librarian_id_entry.get()
+        email = self.email_entry.get()
+        shift = self.shift_combobox.get()
+        dob = self.dob_entry.get_date()
+        password = self.password_entry_reg.get()
+
+        if first_name and last_name and librarian_id and email and shift and dob:
+            try:
+                librarian_id = int(librarian_id)
+                with self.controller.get_db_connection() as conn:
+                    with conn.cursor() as cur:
+                        query = """
+                        INSERT INTO Librarian (Librarian_ID, FName, LName, DOB, Shift, email, password)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s);
+                        """
+                        cur.execute(query, (librarian_id, first_name, last_name, dob, shift, email, password))
+                        conn.commit()
+                self.controller.show_frame(Login)
+            except ValueError:
+                messagebox.showerror("Error", "Librarian ID must be an integer.")
+            except Exception as e:
+                messagebox.showerror("Error", f"An error occurred: {e}")
+        else:
+            messagebox.showerror("Error", "Please fill in all fields properly.")
+
+
+
 
 # Main menu screen
 class MainScreen(tk.Frame):
