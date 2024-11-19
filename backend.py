@@ -234,7 +234,7 @@ def booking_history():
                 """
                 SELECT 
                     s.seat_no, s.location, b.start_time, b.end_time,
-                    bo.b_name AS book_name, bo.isbn, bo.authors, bo.pub AS publisher
+                    bo.b_name , bo.isbn, bo.authors, bo.pub AS publisher
                 FROM booking b
                 JOIN seat s ON b.seat_id = s.seat_id
                 JOIN bookingbook_id bb ON b.student_id = bb.student_id AND b.start_time = bb.start_time
@@ -268,7 +268,7 @@ def current_booking():
                 """
                 SELECT 
                     s.seat_no, s.location, b.start_time, b.end_time,
-                    bo.b_name AS book_name, bo.isbn, bo.authors, bo.pub AS publisher
+                    bo.b_name, bo.isbn, bo.authors, bo.pub AS publisher
                 FROM booking b
                 JOIN seat s ON b.seat_id = s.seat_id
                 JOIN bookingbook_id bb ON b.student_id = bb.student_id AND b.start_time = bb.start_time
@@ -289,12 +289,12 @@ def current_booking():
                 "end_time": rows[0]["end_time"],
                 "books": [
                     {
-                        "book_name": row["book_name"],
+                        "b_name": row["b_name"],
                         "isbn": row["isbn"],
                         "authors": row["authors"],
                         "publisher": row["publisher"]
                     }
-                    for row in rows if row["book_name"]
+                    for row in rows if row["b_name"]
                 ]
             }
             return jsonify({'success': True, 'current_booking': current_booking})

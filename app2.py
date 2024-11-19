@@ -409,7 +409,13 @@ class BookingAddBookPage(tk.Frame):
         self.check_vars = []
 
         for i, book in enumerate(books):
-            book_id, book_name, isbn, authors, publisher, category = book.values()
+            # book_id, book_name, isbn, authors, publisher, category = book.values()
+            book_id = book["b_id"]
+            authors = book["authors"]
+            book_name = book["b_name"]
+            isbn = book["isbn"]
+            publisher = book["pub"]
+            category = book["category"]
 
             # Create a frame for each book
             book_frame = ttk.Frame(self.scrollable_frame, padding=10, borderwidth=2, relief="solid")
@@ -470,6 +476,7 @@ class BookingAddBookPage(tk.Frame):
         )
 
         if response and response.get("success"):
+            print(response,response["books"])
             return response["books"]
         else:
             messagebox.showerror("Error", response.get("error", "Failed to fetch books."))
@@ -491,7 +498,7 @@ class BookingAddBookPage(tk.Frame):
         if not self.selected_books:
             messagebox.showinfo("No Selection", "Please select at least one book.")
         else:
-            selected_titles = [book["book_name"] for book in self.selected_books]
+            selected_titles = [book["b_name"] for book in self.selected_books]
             self.controller.data['selected_books'] = self.selected_books
             messagebox.showinfo("Books Selected", f"Selected books: {', '.join(selected_titles)}")
             self.controller.show_frame(BookingFinalizePage)
@@ -531,7 +538,7 @@ class BookingFinalizePage(tk.Frame):
         """Display the selected seat and book details."""
         booking_data = self.controller.data
         seat_info = booking_data.get("cur_seat_info", {})
-        books = booking_data.get("Book_logs", [])
+        books = booking_data.get("selected_books", [])
 
         for widget in self.summary_frame.winfo_children():
             widget.destroy()
@@ -550,7 +557,7 @@ class BookingFinalizePage(tk.Frame):
             ttk.Label(self.summary_frame, text="No books selected.").grid(row=6, column=0, sticky="w")
         else:
             for i, book in enumerate(books, start=7):
-                ttk.Label(self.summary_frame, text=f"- {book['book_name']}").grid(row=i, column=0, sticky="w")
+                ttk.Label(self.summary_frame, text=f"- {book['b_name']}").grid(row=i, column=0, sticky="w")
 
     def confirm_booking(self):
         """Confirm the booking and send data to the backend."""
@@ -567,7 +574,10 @@ class BookingFinalizePage(tk.Frame):
 
         if response and response.get("success"):
             messagebox.showinfo("Success", "Booking confirmed successfully!")
-            self.controller.data = {'stime': "", 'etime': "", 'cur_seat_info': {'location': "", 'seat_no': None, 'seat_id': None}, 'Book_logs': []}
+            id = booking_data.get("student_id")
+            self.controller.data = {'stime': "", 'etime': "", 'cur_seat_info': 
+                                    {'location': "", 'seat_no': None, 'seat_id': None}, 'Book_logs': [],
+                                    "student_id":id}
             self.controller.show_frame(HomePage)
         else:
             messagebox.showerror("Error", response["error"] if response else "Failed to confirm booking.")
@@ -655,9 +665,9 @@ class BookingHistoryPage(tk.Frame):
                     "end_time": row["end_time"],
                     "books": []
                 }
-            if row["book_name"]:
+            if row["b_name"]:
                 bookings[key]["books"].append({
-                    "book_name": row["book_name"],
+                    "b_name": row["b_name"],
                     "isbn": row["isbn"],
                     "authors": row["authors"],
                     "pub": row["publisher"]
@@ -740,7 +750,7 @@ class BookingDetails(tk.Frame):
             authours = f"{', '.join(book['authors'])}"
             if len(authours) >20 :authours = authours[:20]+"..."
             ttk.Label(book_frame, text=f"Book Name:", padding=(5, 5), font=bold_font).grid(row=0, column=0, sticky="w", padx=10)
-            ttk.Label(book_frame, text=f"{book['book_name']}", padding=(5, 5)).grid(row=0, column=1, sticky="w", padx=10)
+            ttk.Label(book_frame, text=f"{book['b_name']}", padding=(5, 5)).grid(row=0, column=1, sticky="w", padx=10)
             ttk.Label(book_frame, text=f"ISBN:", padding=(5, 5), font=bold_font).grid(row=1, column=0, sticky="w", padx=10)
             ttk.Label(book_frame, text=f"{book['isbn']}", padding=(5, 5)).grid(row=1, column=1, sticky="w", padx=10)
             ttk.Label(book_frame, text=f"Publisher:", padding=(5, 5), font=bold_font).grid(row=2, column=0, sticky="w", padx=10)
@@ -784,7 +794,7 @@ class BookingDetailsWithoutScroll(tk.Frame):
             if len(authors) > 20:
                 authors = authors[:20] + "..."
             ttk.Label(book_frame, text=f"Book Name:", padding=(5, 5), font=bold_font).grid(row=0, column=0, sticky="w", padx=10)
-            ttk.Label(book_frame, text=f"{book['book_name']}", padding=(5, 5)).grid(row=0, column=1, sticky="w", padx=10)
+            ttk.Label(book_frame, text=f"{book['b_name']}", padding=(5, 5)).grid(row=0, column=1, sticky="w", padx=10)
             ttk.Label(book_frame, text=f"ISBN:", padding=(5, 5), font=bold_font).grid(row=1, column=0, sticky="w", padx=10)
             ttk.Label(book_frame, text=f"{book['isbn']}", padding=(5, 5)).grid(row=1, column=1, sticky="w", padx=10)
             ttk.Label(book_frame, text=f"Publisher:", padding=(5, 5), font=bold_font).grid(row=2, column=0, sticky="w", padx=10)
@@ -849,7 +859,7 @@ class HomePage(tk.Frame):
                 }
                 books = [
                     {
-                        "book_name": book["book_name"],
+                        "b_name": book["b_name"],
                         "isbn": book["isbn"],
                         "pub": book["publisher"],
                         "authors": book["authors"]
