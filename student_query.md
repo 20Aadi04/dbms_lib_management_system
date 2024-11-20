@@ -12,9 +12,7 @@ FROM student
 WHERE student_id = %s;
 ```
 
-- **Purpose**: Fetches the details of a student based on their `student_id` to authenticate the user.
-- **Used in**: `/login` API (`POST` method).
-- **Explanation**: Retrieves all fields for the student. This is followed by password validation logic.
+ Fetches the details of a student based on their `student_id` to authenticate the user.
 
 ---
 
@@ -27,9 +25,8 @@ INSERT INTO student (student_id, fname, lname, dob, grad_type, email, phone_num,
 VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
 ```
 
-- **Purpose**: Inserts a new student's details into the `student` table during registration.
-- **Used in**: `/register` API (`POST` method).
-- **Explanation**: Adds a new student with their personal details and hashed password to the database.
+Inserts a new student's details into the `student` table during registration.
+
 
 ---
 
@@ -47,9 +44,8 @@ WHERE seat_id NOT IN (
 );
 ```
 
-- **Purpose**: Retrieves all available seats during a specified time range.
-- **Used in**: `/available-seats` API (`GET` method).
-- **Explanation**: Filters out seats that are already booked for the given time range.
+Retrieves all available seats during a specified time range.
+
 
 ---
 
@@ -71,9 +67,8 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-- **Purpose**: Checks if a student already has a booking that overlaps with the specified time range.
-- **Used in**: `/check-booking-conflict` API (`GET` method).
-- **Explanation**: Returns `TRUE` if there is no conflict and `FALSE` otherwise.
+Checks if a student already has a booking that overlaps with the specified time range.
+
 
 ---
 
@@ -93,9 +88,8 @@ WHERE b.b_id NOT IN (
 );
 ```
 
-- **Purpose**: Fetches all books that are available during a specified time slot.
-- **Used in**: `/available-books` API (`GET` method).
-- **Explanation**: Filters out books that are already reserved for the given time range.
+ Fetches all books that are available during a specified time slot.
+ Filters out books that are already reserved for the given time range.
 
 ---
 
@@ -110,8 +104,7 @@ INSERT INTO booking (student_id, seat_id, start_time, end_time)
 VALUES (%s, %s, %s, %s);
 ```
 
-- **Purpose**: Adds a new booking record for a student.
-- **Used in**: `/create-booking` API (`POST` method).
+Adds a new booking record for a student.
 
 #### **Insert Associated Books**
 
@@ -121,8 +114,6 @@ VALUES (%s, %s, %s, %s);
 ```
 
 - **Purpose**: Links books to the created booking.
-- **Used in**: `/create-booking` API (`POST` method).
-- **Explanation**: Multiple `INSERT` queries are executed for each selected book.
 
 ---
 
@@ -142,9 +133,8 @@ WHERE b.student_id = %s
 ORDER BY b.start_time DESC;
 ```
 
-- **Purpose**: Retrieves all past bookings of a student along with seat details and associated books.
-- **Used in**: `/booking-history` API (`GET` method).
-- **Explanation**: Joins `booking`, `seat`, `book`, and `bookingbook_id` tables to fetch complete booking history.
+ Retrieves all past bookings of a student along with seat details and associated books.
+ Joins `booking`, `seat`, `book`, and `bookingbook_id` tables to fetch complete booking history.
 
 ---
 
@@ -169,8 +159,7 @@ WHERE (b.student_id, b.start_time) IN (
     AND b.end_time > NOW();
 ```
 
-- **Purpose**: Fetches the most recent active booking for a student.
-- **Used in**: `/current-booking` API (`GET` method).
-- **Explanation**: Finds the latest booking for the student where the booking is still active.
+Fetches the most recent active booking for a student.
+Finds the latest booking for the student where the booking is still active.
 
 ---
