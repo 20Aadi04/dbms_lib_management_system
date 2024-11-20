@@ -169,14 +169,15 @@ def available_books():
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
                 """
-                SELECT b.b_id, b.b_name, b.authors, b.isbn, b.pub, b.category
-                FROM book b
-                WHERE b.b_id NOT IN (
-                    SELECT bb.book_id
-                    FROM bookingbook_id bb
-                    JOIN booking bk ON bb.student_id = bk.student_id AND bb.start_time = bk.start_time
-                    WHERE bk.start_time < %s AND bk.end_time > %s
-                );
+                    SELECT DISTINCT ON (b.isbn) 
+                        b.b_id, b.b_name, b.authors, b.isbn, b.pub, b.category
+                    FROM book b
+                    WHERE b.b_id NOT IN (
+                        SELECT bb.book_id
+                        FROM bookingbook_id bb
+                        JOIN booking bk ON bb.student_id = bk.student_id AND bb.start_time = bk.start_time
+                        WHERE bk.start_time < %s AND bk.end_time > %s
+                    );
                 """,
                 (end_time, start_time)
             )

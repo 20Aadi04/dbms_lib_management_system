@@ -82,7 +82,7 @@ class Login(tk.Frame):
         if password:
             password = password[0]
             if self.id_entry.get() :
-                if hash(self.password_entry.get()) == password:
+                if self.password_entry.get() == password:
                     self.controller.show_frame(MainScreen)
                 else:
                     messagebox.showerror("password","password does not match")
@@ -149,7 +149,8 @@ class Register(tk.Frame):
                         INSERT INTO Librarian (Librarian_ID, FName, LName, DOB, Shift, email, password)
                         VALUES (%s, %s, %s, %s, %s, %s, %s);
                         """
-                        cur.execute(query, (librarian_id, first_name, last_name, dob, shift, email, hash(password)))
+                        # print(password,len(password),len(password.strip()),hash(password))
+                        cur.execute(query, (librarian_id, first_name, last_name, dob, shift, email, password))
                         conn.commit()
                 self.controller.show_frame(Login)
             except ValueError:
@@ -190,26 +191,16 @@ class MainScreen(tk.Frame):
         self.btn_user_statistics =  ttk.Button(self, text="User Statistics", command=lambda: controller.show_frame(UserStatistics))
         self.btn_user_statistics.pack(pady=5)
 
-        btn_declare_holiday = ttk.Button(self, text="Declare Holiday", command=lambda: self.declare_holiday)
+        btn_declare_holiday = ttk.Button(self, text="Declare Holiday tommorrow", command=lambda: self.declare_holiday)
         btn_declare_holiday.pack(pady=5)
 
         ttk.Button(self, text="Back", command=lambda: self.controller.show_frame(Login)).pack(pady=20)
 
-        def declare_holiday(self):
-            with self.controller.get_db_connection() as conn:
-                with conn.cursor() as cur:
-                   cur.execute("""
-                               Create or replace procedure delete_bookings_for_today()
-                                language plpgsql
-                                as $$
-                                begin
-                                    delete from booking
-                                    where start_time::date = current_date;
-                                end;
-                                $$;
-                               """)
-                   cur.execute("call delete_bookings_for_today();")
-                   conn.commit()
+    def declare_holiday(self):
+        with self.controller.get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("CALL declare_holiday_and_delete_bookings();")
+                conn.commit()
 
 
 
@@ -456,7 +447,6 @@ class UserStatistics(tk.Frame):
         self.create_location_graph()
         self.create_book_graph()
         self.create_weekly_rush()
-        self.create_hourly_rush()
 
     def hide_graphs_and_go_back(self):
         self.clear_graphs()
@@ -552,36 +542,6 @@ class UserStatistics(tk.Frame):
 
         self.graph_widgets.append(graph_widget)
 
-    def create_hourly_rush(self):
-        """Create and display the book graph."""
-        with self.controller.get_db_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                            select extract(hour from start_time)as hour,count(*) from booking 
-                            group by hour
-                            order by extract(hour from start_time);
-                            """)
-                hourly_rush = cur.fetchall()
-                hour, hour_count = zip(*hourly_rush)
-
-        fig = plt.Figure(figsize=(6, 6))
-        ax = fig.add_subplot(111)
-        bars = ax.bar(hour, hour_count, color="cyan")
-        ax.set_title("Hourly Rush")
-        ax.set_xlabel("Hour")
-        ax.set_ylabel("Count")
-        ax.set_xticks(hour)
-        ax.yaxis.set_major_locator(MaxNLocator(integer=True))
-        ax.bar_label(bars, fmt='%d')
-        ax.set_xticklabels(hour, rotation=90, ha="right")
-        fig.tight_layout()
-
-        canvas_plot = FigureCanvasTkAgg(fig, self.scrollable_frame)
-        graph_widget = canvas_plot.get_tk_widget()
-        graph_widget.pack(pady=10)
-
-        self.graph_widgets.append(graph_widget)
- 
 
 
 if __name__ == "__main__":

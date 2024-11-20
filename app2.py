@@ -296,7 +296,7 @@ class BookingTimeSlotPage(tk.Frame):
         self.slider.forceValues([lp, rp])
 
     def update_time_labels(self):
-        tomorrow = datetime.now() + timedelta(days=1)
+        tomorrow = datetime.now() - timedelta(days=1)
         tomorrow_at_8am = tomorrow.replace(hour=8, minute=0, second=0, microsecond=0)
         start_time = tomorrow_at_8am + timedelta(minutes=self.left_pointer)
         end_time = tomorrow_at_8am + timedelta(minutes=self.right_pointer)
@@ -484,6 +484,7 @@ class BookingAddBookPage(tk.Frame):
                 command=lambda var=var, book=book: self.limit_selection(var, book)
             )
             checkbox.grid(row=i, column=5, padx=5, pady=10, sticky="e")
+            self.book_widgets.append(checkbox)
             self.check_vars.append(var)
 
         self.scrollable_frame.update_idletasks()
