@@ -49,6 +49,7 @@ def register():
     data = request.json
 
     required_fields = ["student_id", "fname", "lname", "dob", "grad_type", "email", "phone_num", "password"]
+    print(data)
     if not all(field in data for field in required_fields):
         return jsonify({"success": False, "error": "Missing required fields"}), 400
 
@@ -58,8 +59,8 @@ def register():
             # Insert the new student into the database
             cur.execute(
                 """
-                INSERT INTO student (student_id, fname, lname, dob, grad_type, email, phone_num)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO student (student_id, fname, lname, dob, grad_type, email, phone_num,password)
+                VALUES (%s, %s, %s, %s, %s, %s, %s,%s)
                 """,
                 (
                     data["student_id"],
@@ -68,8 +69,8 @@ def register():
                     data["dob"],
                     data["grad_type"],
                     data["email"],
-                    data["phone_num"]
-                    # data["password"]
+                    data["phone_num"],
+                    data["password"]
                 )
             )
         conn.commit()
@@ -216,10 +217,10 @@ def create_booking():
             for book_id in books:
                 cur.execute(
                     """
-                    INSERT INTO bookingbook_id (student_id, start_time, book_id)
-                    VALUES (%s, %s, %s)
+                    INSERT INTO bookingbook_id (student_id, start_time, end_time,book_id)
+                    VALUES (%s, %s,%s, %s)
                     """,
-                    (student_id, start_time, book_id)
+                    (student_id, start_time,end_time, book_id)
                 )
 
             conn.commit()
