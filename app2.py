@@ -296,7 +296,7 @@ class BookingTimeSlotPage(tk.Frame):
         self.slider.forceValues([lp, rp])
 
     def update_time_labels(self):
-        tomorrow = datetime.now() - timedelta(days=1)
+        tomorrow = datetime.now() + timedelta(days=1)
         tomorrow_at_8am = tomorrow.replace(hour=8, minute=0, second=0, microsecond=0)
         start_time = tomorrow_at_8am + timedelta(minutes=self.left_pointer)
         end_time = tomorrow_at_8am + timedelta(minutes=self.right_pointer)
