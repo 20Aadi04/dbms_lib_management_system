@@ -130,7 +130,19 @@ SET seat_id = (
             )
         LIMIT 1
     )
-WHERE bo.seat_id = OLD.seat_id;
+WHERE bo.seat_id = OLD.seat_id
+    and EXISTS (
+        SELECT se.seat_id
+        FROM seat se
+        WHERE se.seat_id != OLD.seat_id
+            AND NOT EXISTS (
+                SELECT b.seat_id
+                FROM booking b
+                WHERE b.seat_id = se.seat_id
+                    AND b.start_time < bo.end_time
+                    AND b.end_time > bo.start_time
+            )
+    );
 DELETE FROM booking
 WHERE seat_id = OLD.seat_id;
 RETURN OLD;
