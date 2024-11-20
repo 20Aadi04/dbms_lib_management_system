@@ -4,14 +4,11 @@ from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 import os
 
-# Load environment variables
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 
-# Initialize Flask app
 app = Flask(__name__)
 
-# Utility function to get database connection
 def get_db_connection():
     conn = psycopg2.connect(DATABASE_URL)
     return conn
