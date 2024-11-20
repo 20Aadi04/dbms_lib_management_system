@@ -187,10 +187,31 @@ class MainScreen(tk.Frame):
         btn_remove_seat = ttk.Button(self, text="Remove Seat", command=lambda: controller.show_frame(RemoveSeat))
         btn_remove_seat.pack(pady=5)
 
-        btn_user_statistics =  ttk.Button(self, text="User Statistics", command=lambda: controller.show_frame(UserStatistics))
-        btn_user_statistics.pack(pady=5)
+        self.btn_user_statistics =  ttk.Button(self, text="User Statistics", command=lambda: controller.show_frame(UserStatistics))
+        self.btn_user_statistics.pack(pady=5)
+
+        btn_declare_holiday = ttk.Button(self, text="Declare Holiday", command=lambda: self.declare_holiday)
+        btn_declare_holiday.pack(pady=5)
 
         ttk.Button(self, text="Back", command=lambda: self.controller.show_frame(Login)).pack(pady=20)
+
+        def declare_holiday(self):
+            with self.controller.get_db_connection() as conn:
+                with conn.cursor() as cur:
+                   cur.execute("""
+                               Create or replace procedure delete_bookings_for_today()
+                                language plpgsql
+                                as $$
+                                begin
+                                    delete from booking
+                                    where start_time::date = current_date;
+                                end;
+                                $$;
+                               """)
+                   cur.execute("call delete_bookings_for_today();")
+                   conn.commit()
+
+
 
 
 # Frame for adding a new book
