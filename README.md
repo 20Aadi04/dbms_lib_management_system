@@ -247,3 +247,14 @@ CREATE OR REPLACE FUNCTION get_next_available_seat(location_name VARCHAR) RETURN
 END;
 $$ LANGUAGE plpgsql;
 ```
+# Procedure
+```sql
+CREATE OR REPLACE PROCEDURE declare_holiday_and_delete_bookings()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    DELETE FROM booking
+    WHERE start_time::date = current_date + 1;
+END;
+$$;
+```
