@@ -183,7 +183,7 @@ class RegistrationPage(tk.Frame):
         grad_type = self.grad_type_var.get()
         dob = self.dob_entry.get()
         password = self.password_entry_reg.get()
-
+        password = str(hash(password))
         if first_name and last_name and student_id and email and phone_number and grad_type and dob and password:
             # Prepare payload for API
             payload = {
@@ -204,7 +204,7 @@ class RegistrationPage(tk.Frame):
                 messagebox.showinfo("Registration", "Registration Successful")
                 self.controller.show_frame(LoginPage)
             else:
-                messagebox.showerror("Error", response.get("error", "Registration failed. Please try again."))
+                messagebox.showerror("Error",  "Registration failed. Please try again.")
         else:
             messagebox.showerror("Error", "Please fill out all fields correctly.")
 

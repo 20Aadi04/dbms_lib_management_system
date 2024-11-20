@@ -6,8 +6,8 @@ triggers/functions/procedure ideas;
 
 triggers:
 
-- when a chair is removed reassign or cancel the seats;
-- when a book is removed reassign or cancel the books;
+- [x] when a chair is removed reassign or cancel the seats;
+- [x] when a book is removed reassign or cancel the books;
 
 4 complex queries in librarian app
 
@@ -86,7 +86,7 @@ WHERE (b.student_id, b.start_time) in (
         Select student_id,
             start_time
         from booking
-        where student_id = 20221011
+        where student_id = %s
         ORDER by start_time
         limit 1
     )
@@ -102,7 +102,7 @@ CREATE OR REPLACE FUNCTION check_booking_conflict(sstudent_id INT, sstart_time T
 RETURNS BOOLEAN AS $$
 BEGIN
 	RETURN NOT EXISTS (
-	SELECT 1
+	SELECT student_id
 	FROM booking
 	WHERE student_id = sstudent_id
 	AND (start_time , end_time ) overlaps ( sstart_time,send_time ));
@@ -137,4 +137,47 @@ RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
 CREATE or REPLACE TRIGGER before_seat_deletion BEFORE DELETE ON seat FOR EACH ROW EXECUTE FUNCTION seat_deletion_trigger();
+```
+
+2. removal of book may result in bookingbook_id with that book replaced with other book with the same ISBN that is free during the time where the replacing seat is free .
+
+```sql
+CREATE OR REPLACE FUNCTION book_deletion_trigger() RETURNS TRIGGER AS $$ BEGIN
+UPDATE BookingBook_ID bb
+SET book_id = (
+        SELECT b.b_id
+        FROM Book b
+        WHERE b.b_id != OLD.b_id
+            AND NOT EXISTS (
+                SELECT 1
+                FROM BookingBook_ID bb2
+                WHERE bb2.book_id = b.b_id
+                    AND bb2.start_time < bb.end_time
+                    AND bb2.end_time > bb.start_time
+            )
+            and b.isbn = OLD.isbn
+        LIMIT 1
+    )
+WHERE bb.book_id = OLD.b_id
+    and EXISTS(
+        SELECT b.b_id
+        FROM Book b
+        WHERE b.b_id != OLD.b_id
+            AND NOT EXISTS (
+                SELECT 1
+                FROM BookingBook_ID bb2
+                WHERE bb2.book_id = b.b_id
+                    AND bb2.start_time < bb.end_time
+                    AND bb2.end_time > bb.start_time
+            )
+            and b.isbn = OLD.isbn
+        LIMIT 1
+    );
+DELETE FROM BookingBook_ID
+WHERE book_id = OLD.b_id;
+RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+CREATE OR REPLACE TRIGGER before_book_deletion BEFORE DELETE ON Book FOR EACH ROW EXECUTE FUNCTION book_deletion_trigger();
+
 ```
