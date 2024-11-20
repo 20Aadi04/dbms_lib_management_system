@@ -82,7 +82,7 @@ class Login(tk.Frame):
         if password:
             password = password[0]
             if self.id_entry.get() :
-                if self.password_entry.get() == password:
+                if hash(self.password_entry.get()) == password:
                     self.controller.show_frame(MainScreen)
                 else:
                     messagebox.showerror("password","password does not match")
@@ -149,7 +149,7 @@ class Register(tk.Frame):
                         INSERT INTO Librarian (Librarian_ID, FName, LName, DOB, Shift, email, password)
                         VALUES (%s, %s, %s, %s, %s, %s, %s);
                         """
-                        cur.execute(query, (librarian_id, first_name, last_name, dob, shift, email, password))
+                        cur.execute(query, (librarian_id, first_name, last_name, dob, shift, email, hash(password)))
                         conn.commit()
                 self.controller.show_frame(Login)
             except ValueError:
@@ -321,9 +321,7 @@ class AddSeat(tk.Frame):
         with self.controller.get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(f"""
-                    SELECT number FROM (SELECT generate_series(1,(SELECT get_seat_count('{location}')+1)) AS number) AS series
-                    WHERE number NOT IN (SELECT seat_no FROM Seat WHERE location = '{location}')
-                    ORDER BY number LIMIT 1;
+                    SELECT get_next_available_seat('{location}');
                 """)
                 row = cur.fetchone()
                 print(row)
